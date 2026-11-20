@@ -217,6 +217,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 .device.assemble{animation:assemble 1.1s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes assemble{0%{opacity:0;transform:scale(.55) rotate(-8deg);filter:brightness(3) blur(4px)}60%{opacity:1;filter:brightness(1.5)}100%{opacity:1;transform:none;filter:none}}
 #ep .epsub{font-family:var(--f-pixel);font-size:13px;color:var(--muted);letter-spacing:.08em;animation:rise .5s .35s both}
+#saveConflict,#installGuide{width:min(400px,calc(100% - 32px));max-height:85dvh;overflow:auto;color:var(--ink);background:#10182a;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 16px 54px #0009}
+#saveConflict::backdrop,#installGuide::backdrop{background:#060919cc}
+#installGuide header{display:flex;align-items:center;gap:12px}
+#installGuide img{width:48px;height:48px;border-radius:11px}
+#installGuide h2{margin:0;font-size:20px;line-height:1.35}
+#installGuide ol{margin:16px 0;padding-left:24px;line-height:1.55}
+#installGuide li+li{margin-top:8px}
+#installGuide .note{margin:0 0 16px}
+#installContinue{width:100%}
+#rivalDialog{width:min(420px,calc(100% - 32px));max-height:80dvh;overflow:auto;color:#edf2ff;background:#171e33;border:1px solid #7181aa;border-radius:16px;padding:18px;box-shadow:0 16px 54px #0008}
+#rivalDialog::backdrop{background:#060919b8}
+#rivalDialog h2{font-size:18px;margin:0 0 12px}
+#rivalDialog p{font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+#rivalDialog form:not([hidden]){display:grid;gap:8px}
+#rivalDialog input{min-width:0;border:1px solid #7181aa;border-radius:8px;background:#0d1428;color:inherit;font:inherit;font-size:16px;padding:8px}
+#rivalDialog .rival-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#rivalStatus{min-height:1.55em;color:#bec9e7}
 .motionbtn{align-self:center;font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.3);background:rgba(255,255,255,.55);color:#14182a;cursor:pointer}
 #intro .say.dim{opacity:0}
 #intro .tap{position:absolute;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:12px;color:#7d89a8;animation:blink 1.2s steps(2) infinite}
@@ -291,6 +308,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
         <div class="sub">
           <div class="msg" id="msg">LINK READY</div>
           <button class="motionbtn" id="motionBtn" type="button" hidden>흔들어서 응원하기 켜기</button>
+          <button class="motionbtn" id="rivalBtn" type="button" hidden>글리치 신호</button>
           <div class="linkbar" id="linkbar" hidden><span>LINK</span><div class="segs" id="segs"></div></div>
         </div>
         <div class="grille"></div>
@@ -312,6 +330,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 <canvas id="fx" hidden></canvas>
 <canvas id="cut" hidden></canvas>
 <div class="ov" id="ep" hidden><div class="no" id="epNo">EPISODE 01</div><div class="line"></div><div class="title" id="epTitle"></div><div class="epsub" id="epSub"></div><div class="tap">화면을 누르면 계속</div></div>
+
+<dialog id="saveConflict" aria-labelledby="saveConflictTitle">
+  <h2 id="saveConflictTitle">다른 탭에서 저장이 바뀌었어</h2>
+  <p>다른 탭을 닫고 최신 저장을 불러와 줘.</p>
+  <button class="go-btn" id="reloadSave" type="button">최신 저장 불러오기</button>
+</dialog>
+<dialog id="installGuide" aria-labelledby="installTitle">
+  <header>
+    <img src="icons/apple-touch-icon.png" alt="" width="48" height="48">
+    <h2 id="installTitle">코드 링커를 홈 화면에 추가하기</h2>
+  </header>
+  <ol>
+    <li>사파리의 <b>공유</b> 버튼을 눌러.</li>
+    <li><b>홈 화면에 추가</b>를 골라. <b>웹 앱으로 열기</b>가 보이면 켜고 <b>추가</b>를 눌러.</li>
+    <li>홈 화면에서 <b>코드 링커</b> 아이콘을 열어 게임을 시작해.</li>
+  </ol>
+  <p class="note">홈 화면 앱의 진행은 사파리와 별도로 저장될 수 있어.</p>
+  <form method="dialog"><button class="go-btn" id="installContinue" type="submit">지금은 사파리에서 시작</button></form>
+</dialog>
 
 <div class="ov" id="intro" hidden>
   <canvas id="opcv"></canvas>
@@ -347,9 +384,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
       <div class="opt"><span>진화 시간</span><div class="seg" id="optTime"><button type="button" data-v="orig">오리지널</button><button type="button" data-v="fast">빠른 진행</button></div></div>
       <p class="note">오리지널: 꼬마기 10분 · 전사기 6시간 · 기사기 24시간 · 영웅기 36시간 · 전설기 48시간 (잠든 동안엔 멈춰). 빠른 진행: 한 번 앉은 자리에서 끝까지 볼 수 있는 속도.</p>
       <div class="opt"><span>시간 배속</span><div class="seg" id="optSpeed"><button type="button" data-v="1">x1</button><button type="button" data-v="10">x10</button><button type="button" data-v="60">x60</button></div></div>
-      <p class="note">시간 배속은 성장·배고픔 타이머를 빠르게 돌려. 진화를 빨리 보고 싶을 때 써 봐.</p>
+      <p class="note">시간 배속은 성장과 진화 시간을 빠르게 돌려. 먹이와 위생, 체력은 실제 시간을 따라가. 진화를 빨리 보고 싶을 때 써 봐.</p>
       <div><h4>링커 색</h4><div class="swatches" id="swatches2"></div></div>
-      <p class="note" id="installTip" hidden>📲 사파리 아래쪽 <b>공유</b> 버튼 → <b>홈 화면에 추가</b>를 누르면 주소창 없이 앱처럼 쓸 수 있어. (홈 화면 앱은 사파리와 저장 공간이 따로라서, 처음부터 시작돼.)</p>
+      <button class="iconbtn" id="installHelp" type="button" hidden>홈 화면에 추가하는 방법</button>
       <button class="iconbtn" id="replayBtn" type="button">오프닝 「그날 밤」 다시 보기</button>
       <button class="danger" id="resetBtn" type="button">처음부터 다시 시작</button>
     </div>
@@ -364,6 +401,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
         <b>훈련</b>: 「!」가 뜨면 A 연타! 벽을 조금이라도 부숴야 근력이 올라. 훈련 4회마다 노력 하트 +1 (진화하면 0).<br>
         <b>배틀</b>: 싱글(HP 10) 또는 태그(HP 30, 앨범 속 동료와). 「!」가 뜨면 3초 동안 A 연타 → 서로 기술을 주고받아. 6턴 안에 HP를 0으로 만들거나 더 많이 남기면 승리. 이길수록 상대가 강해지고, 「계속」이나 「처음부터」를 고를 수 있어. 배틀 1번에 체력 1.<br>
         태그는 눈금을 A나 B로 멈춘 다음 연타. 맞으면 동료와 교대해. 눈금과 연타가 맞아떨어지면 크리티컬!<br>
+        <b>글리치 신호</b>: 배틀 메뉴에서 글리치와 겨룰 수 있어. 기기 내 모델을 받으면 출격 전에 말을 걸 수 있어.<br>
         <b>LINK</b>: 연타와 응원으로 게이지가 차면 B로 <b>공명 진화</b>나 필살기. 배틀이 시작되면 화면이 컬러로 바뀌어.<br>
         <b>불</b>: WAKE로 깨우기, SLEEP으로 재우기(낮엔 낮잠). 잘 땐 배고픔·근력이 줄지 않고 진화 시간도 멈춰. 체력이 회복돼.<br>
         <b>치료</b>: 해골 마크가 사라질 때까지. 다친 채 오래 두면 데이터가 흩어져 버려.<br>
@@ -374,6 +412,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
     </div>
   </div>
 </div>
+
+<dialog id="rivalDialog" aria-labelledby="rivalTitle">
+  <h2 id="rivalTitle">글리치 통신</h2>
+  <p id="rivalScore" class="note" hidden></p>
+  <p id="rivalReply" aria-live="polite"></p>
+  <form id="rivalForm">
+    <label for="rivalInput">글리치에게 할 말</label>
+    <input id="rivalInput" maxlength="120" autocomplete="off">
+    <button class="iconbtn" id="rivalSend" type="submit">전송</button>
+  </form>
+  <p id="rivalStatus" role="status"></p>
+  <div class="rival-actions">
+    <button class="iconbtn" id="rivalSetup" type="button">기기 내 모델 받기 (약 440MB)</button>
+    <button class="iconbtn" id="rivalFight" type="button">출격</button>
+    <button class="iconbtn" id="rivalClose" type="button">닫기</button>
+  </div>
+</dialog>
 
 <script>
 "use strict";
@@ -387,8 +442,7 @@ function batchim(w){const c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)retur
 const J=(w,a,b)=>batchim(w)?a:b;
 const store={
   get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
-  del(k){try{localStorage.removeItem(k)}catch(e){}}
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 };
 const SAVE='codelinker.save.v1', SETK='codelinker.set.v1';
 let SET=Object.assign({sound:true,vib:true,speed:1,timeMode:'orig'},store.get(SETK)||{});
@@ -873,7 +927,7 @@ function portrait(canvas,id,o={}){
 /* ================= state ================= */
 let S=null;
 function partnerFresh(){return{hunger:3,strength:2,weight:5,effort:0,vit:10,trainCnt:0,protein:0,od:0,injury:0,injT:0,poop:0,lightsOn:true,sleeping:false,wakeUntil:0,napUntil:0,
-  tH:0,tS:0,tP:0,tSick:0,vitT:0,callSince:0,stAwake:0,sm:0,str:0,sb:0,sw:0,mBaby:0,pw:0,pl:0,tw:0,tl:0,tagWith:{},age:0,bornAt:Date.now(),ladder:0}}
+  snackAt:null,tH:0,tS:0,tP:0,tSick:0,vitT:0,callSince:0,stAwake:0,sm:0,str:0,sb:0,sw:0,mBaby:0,pw:0,pl:0,tw:0,tl:0,tagWith:{},age:0,bornAt:Date.now(),ladder:0}}
 function newState(tamer,color){const now=Date.now();return Object.assign({v:1,tamer,color,form:'egg',ver:'v1',gt:0,lastReal:now,
   mistakes:0,trains:0,talks:0,wins:0,losses:0,tagWins:0,bond:20,encAt:now+120e3,episodes:[],seen:['egg'],raised:[],album:[],flags:{},lastTalk:-1e9},partnerFresh())}
 function migrate(s){const base=newState(s.tamer,s.color);const o=Object.assign(base,s);
@@ -885,7 +939,35 @@ function migrate(s){const base=newState(s.tamer,s.color);const o=Object.assign(b
     o.raised=[...new Set([o.form,...o.album.map(entry=>entry.id)].filter(isCollectible))];
   }
   return o}
-function save(){if(!S)return;S.lastReal=Date.now();store.set(SAVE,S)}
+let savedSnapshot=null,saveConflict=false;
+function checkSaveSnapshot(){
+  if(saveConflict)return false;
+  if(localStorage.getItem(SAVE)===savedSnapshot)return true;
+  saveConflict=true;
+  $('#saveConflict').showModal();
+  return false;
+}
+function withSaveLock(write){
+  const commit=()=>{
+    try{if(checkSaveSnapshot())write()}catch(error){console.warn('Could not save CODE LINKER',error)}
+  };
+  if(navigator.locks) return navigator.locks.request(SAVE,commit).catch(error=>console.warn('Could not lock CODE LINKER save',error));
+  commit();
+}
+function save(){
+  if(!S||saveConflict)return;
+  S.lastReal=Date.now();
+  return withSaveLock(()=>{
+    const snapshot=JSON.stringify(S);
+    localStorage.setItem(SAVE,snapshot);
+    savedSnapshot=snapshot;
+  });
+}
+addEventListener('storage',event=>{
+  if(event.storageArea===localStorage&&(event.key===SAVE||event.key===null))checkSaveSnapshot();
+});
+$('#saveConflict').addEventListener('cancel',event=>event.preventDefault());
+$('#reloadSave').onclick=()=>location.reload();
 function addSeen(f){if(f&&!S.seen.includes(f))S.seen.push(f)}
 function bondAdd(n){S.bond=clamp(S.bond+n,0,100)}
 function isCollectible(id){const form=FORMS[id];return Boolean(form&&!form.enemy&&form.stage>0)}
@@ -980,35 +1062,34 @@ function callReasons(){
 }
 function isNight(ts){const h=new Date(ts).getHours();return h>=0&&h<7}
 function addMistake(live){S.mistakes++;S.sm++;if(stageOf(S.form)<=2)S.mBaby++;bondAdd(-5);if(live){say('케어 미스… 링크가 약해졌다');SFX.no()}}
-function tick(ms,realNow,live){
+function tick(ms,realNow,live,mistakeLimit=Infinity){
   S.gt+=ms;if(S.gone)return;S.age+=ms;
-  const st=stageOf(S.form);
+  const st=stageOf(S.form),rms=live?ms/Math.max(1,SET.speed):ms;
   if(st===0){S.stAwake+=ms;return}
   const bed=st>=2&&isNight(realNow)&&realNow>S.wakeUntil,nap=realNow<S.napUntil,sleepNow=bed||nap;
   if(sleepNow!==S.sleeping){S.sleeping=sleepNow;if(live)say(sleepNow?(nap?'낮잠을 잔다… 쿨쿨':`${nm(S.form)}${J(nm(S.form),'이','가')} 졸려 한다… 불을 꺼 줘`):'좋은 아침!');if(!sleepNow)S.lightsOn=true}
-  if(S.sleeping){S.vitT+=ms;if(S.vitT>=R().sleepVit){S.vitT=0;if(st>=3)S.vit=Math.min(10,S.vit+1)}}
+  if(S.sleeping){S.vitT+=rms;if(S.vitT>=R().sleepVit){S.vitT=0;if(st>=3)S.vit=Math.min(10,S.vit+1)}}
   else{
     S.stAwake+=ms;
-    S.tH+=ms;if(S.tH>=HUNGER_MS){S.tH=0;if(S.hunger>0)S.hunger--}
-    S.tS+=ms;if(S.tS>=STR_MS){S.tS=0;if(S.strength>0)S.strength--}
-    S.tP+=ms;if(S.tP>=POOP_MS){S.tP=0;if(S.poop<4){S.poop++;if(live){SFX.poop();say('응가를 했다!')}}}
-    S.vitT+=ms;if(S.vitT>=R().vit){S.vitT=0;S.vit=Math.min(10,S.vit+1)}
+    S.tH+=rms;if(S.tH>=HUNGER_MS){S.tH=0;if(S.hunger>0)S.hunger--}
+    S.tS+=rms;if(S.tS>=STR_MS){S.tS=0;if(S.strength>0)S.strength--}
+    S.tP+=rms;if(S.tP>=POOP_MS){S.tP=0;if(S.poop<4){S.poop++;if(live){SFX.poop();say('응가를 했다!')}}}
+    S.vitT+=rms;if(S.vitT>=R().vit){S.vitT=0;S.vit=Math.min(10,S.vit+1)}
   }
-  if(S.poop>=4&&!S.injury){S.tSick+=ms;if(S.tSick>=SICK_MS){S.injury=1;S.tSick=0;if(live){say('지저분해서 다쳐 버렸다!');SFX.call()}}}else if(S.poop<4)S.tSick=0;
-  const rms=live?ms/Math.max(1,SET.speed):ms; // the speed-up setting only hurries growth, never neglect
+  if(S.poop>=4&&!S.injury){S.tSick+=rms;if(S.tSick>=SICK_MS){S.injury=1;S.tSick=0;if(live){say('지저분해서 다쳐 버렸다!');SFX.call()}}}else if(S.poop<4)S.tSick=0;
   if(S.injury){S.injT+=rms;if(S.injT>=R().inj){S.injT=0;S.lostPending=true;if(live&&mode.name==='main'&&!busy()){S.lostPending=false;partnerLost()}return}}else S.injT=0;
   const rs=callReasons();
   if(rs.length){
     if(!S.callSince){S.callSince=1;S.callT=0;if(live){SFX.call();vib([60,60,60]);say('!! '+rs[0])}}
-    else{S.callT=(S.callT||0)+rms;if(S.callT>CALL_MS){addMistake(live);S.callT=0}}
+    else{S.callT=(S.callT||0)+rms;if(S.callT>CALL_MS){if(S.mistakes<mistakeLimit)addMistake(live);S.callT=0}}
   }else{S.callSince=0;S.callT=0}
 }
 function catchUp(){
   if(!S)return 0;
   const el=clamp(Date.now()-S.lastReal,0,12*3600e3);if(el<3000)return el;
-  const b={m:S.mistakes,sm:S.sm,mb:S.mBaby},step=10e3;let t=S.lastReal;
-  for(let left=el;left>0;left-=step){const ms=Math.min(step,left);t+=ms;tick(ms,t,false);if(S.lostPending)break}
-  S.mistakes=Math.min(S.mistakes,b.m+2);S.sm=Math.min(S.sm,b.sm+2);S.mBaby=Math.min(S.mBaby,b.mb+2);S.lastReal=Date.now();
+  const mistakeLimit=S.mistakes+2,step=10e3;let t=S.lastReal;
+  for(let left=el;left>0;left-=step){const ms=Math.min(step,left);t+=ms;tick(ms,t,false,mistakeLimit);if(S.lostPending)break}
+  S.lastReal=Date.now();
   return el;
 }
 /* the chart: which form comes next, given how this partner was raised */
@@ -1071,8 +1152,13 @@ function talkLine(){
 /* ================= modes ================= */
 let mode={name:'main',t:0};let paused=false;let cineBusy=0;
 const P={x:20,dir:-1,stepT:0,bob:0};
-function setMode(name,data={}){mode=Object.assign({name,t:0},data);if(name==='main'){glow(false)}}
-function busy(){return paused||cineBusy>0}
+function setMode(name,data={}){
+  if(rivalDialog.open)rivalDialog.close();
+  mode=Object.assign({name,t:0},data);
+  if(name==='main')glow(false);
+  paintRivalButton();
+}
+function busy(){return saveConflict||paused||cineBusy>0||rivalDialog.open||$('#installGuide').open}
 function curForm(){return (mode.name==='battle'&&mode.B)?mode.B.cur:(S&&!S.gone?S.form:'egg')}
 function refuse(m){setMode('refuse');say(m);SFX.no()}
 
@@ -1129,8 +1215,24 @@ function partnerLost(){
     archivePartner('lost');S.gone=true;save();say('데이터가 흩어졌다… 새 알을 골라 줘',0);
     speak(`${nm(f)}${J(nm(f),'은','는')} 데이터의 바다로 돌아갔다. 상처는 꼭 치료해 줘야 해.`,'sys');openEggSel(true)});
 }
+/* The snack is a visual trace of a normal meal. Real time keeps its story moving across sessions. */
+const SNACK_DELAY=30*60e3,SNACK_TRACE=24*3600e3,SNACK_X=5;
+function snackPhase(now=Date.now()){
+  if(!S.snackAt)return null;
+  const age=Math.max(0,now-S.snackAt);
+  if(age<SNACK_DELAY)return age<5000?'hiding':'hidden';
+  if(age<SNACK_DELAY+12000)return 'eating';
+  return age<SNACK_DELAY+SNACK_TRACE?'crumbs':null;
+}
 function feedDo(){
-  if(mode.opt===0){if(S.hunger>=4)return refuse('싫어싫어! 배불러');const wasHungry=S.hunger===0;S.hunger++;S.weight++;if(wasHungry)bondAdd(1);setMode('eat',{food:'meat'});say('냠냠… 고기 맛있어!')}
+  if(mode.opt===0){
+    if(S.hunger>=4)return refuse('싫어싫어! 배불러');
+    const wasHungry=S.hunger===0;
+    S.hunger++;S.weight++;if(wasHungry)bondAdd(1);
+    const savesBite=S.hunger>=3&&!snackPhase()&&(!S.snackAt||Math.random()<1/3);
+    if(savesBite)S.snackAt=Date.now();
+    setMode('eat',{food:'meat',savesBite});say('냠냠… 고기 맛있어!');
+  }
   else{if(S.strength>=4){S.od++;if(S.od>=4){S.od=0;S.injury=Math.max(S.injury,1);say('프로틴을 너무 많이 먹어서 탈이 났다!');SFX.no();setMode('refuse');save();return}}
     else S.strength++;
     S.weight+=2;S.protein++;if(S.protein>=4){S.protein=0;S.vit=Math.min(10,S.vit+1)}
@@ -1201,7 +1303,7 @@ function startBattle(type,opt={}){
   $('#lamp').classList.remove('on');
   const pf=S.form,eid=opt.enemy||ladderEnemy();const team=[pf];if(type==='tag')team.push(S.album[opt.mate].id);
   S.vit=Math.max(0,S.vit-1);const hp=type==='tag'?30:10;addSeen(eid);
-  const B={type,team,act:0,base:pf,cur:pf,mate:opt.mate,php:hp,pmax:hp,eid,ehp:hp,emax:hp,turn:0,phase:'intro',t:0,mash:0,meter:1,md:1,meterLock:1,gauge:0,resonated:false,bonus:0,lastCheer:0,cheers:0};
+  const B={type,team,act:0,base:pf,cur:pf,mate:opt.mate,php:hp,pmax:hp,eid,ehp:hp,emax:hp,turn:0,phase:'intro',t:0,mash:0,meter:1,md:1,meterLock:1,gauge:0,resonated:false,bonus:0,lastCheer:0,cheers:0,rival:opt.rival||false,totalMash:0};
   setMode('battle',{B});setColor(true);
   $('#linkbar').hidden=false;paintLink(0);offerMotion();
   SFX.alarm();shake(500);vib([80,40,80]);
@@ -1240,7 +1342,7 @@ function battleInput(btn){
   const B=mode.B;const live=!['intro','win','lose','draw','special'].includes(B.phase);
   if(btn==='A'){
     if(B.phase==='meter'){B.meterLock=Math.max(1,Math.round(B.meter));bgo('ready');SFX.ok();return}
-    if(B.phase==='mash'){B.mash++;SFX.cheer();addGauge(3);if(B.mash%8===1)speak(pick(LINES.cheer),'tamer');return}
+    if(B.phase==='mash'){B.mash++;B.totalMash++;SFX.cheer();addGauge(3);if(B.mash%8===1)speak(pick(LINES.cheer),'tamer');return}
     if(!live)return;const now=performance.now();if(now-B.lastCheer<180)return;B.lastCheer=now;B.cheers++;SFX.cheer();addGauge(2);return;
   }
   if(btn==='C'){if(B.phase==='ready'||B.phase==='meter'){endBattle(null);say('작전상 후퇴!');SFX.sel()}return}
@@ -1277,18 +1379,31 @@ function doResonance(B){
 function endBattle(res){
   const B=mode.B;$('#linkbar').hidden=true;$('#motionBtn').hidden=true;glow(false);$('#lamp').classList.remove('on');$('#lamp2').classList.remove('on');
   setColor(false);S.encAt=Date.now()+rnd(180e3,360e3);
-  if(res!==null)S.sb++;
-  if(res==='win'){if(B.type==='tag'){S.tagWins++;S.tw++;S.tagWith[B.mate]=(S.tagWith[B.mate]||0)+1}else{S.wins++;S.pw++}S.sw++;S.ladder++;bondAdd(3);
+  if(res!==null&&!B.rival)S.sb++;
+  if(res==='win'){
+    if(!B.rival){
+      if(B.type==='tag'){S.tagWins++;S.tw++;S.tagWith[B.mate]=(S.tagWith[B.mate]||0)+1}else{S.wins++;S.pw++}
+      S.sw++;S.ladder++;
+    }
+    bondAdd(3);
     S.weight=Math.max(FORMS[S.form].wt,S.weight-2);if(Math.random()<.5)S.hunger=Math.max(0,S.hunger-1)}
-  else if(res==='lose'){if(B.type==='tag')S.tl++;else{S.losses++;S.pl++}bondAdd(1);if(Math.random()<.35){S.injury=Math.max(S.injury,1);say('패배하면서 다쳐 버렸다…')}}
+  else if(res==='lose'){if(!B.rival){if(B.type==='tag')S.tl++;else{S.losses++;S.pl++}}bondAdd(1);if(Math.random()<.35){S.injury=Math.max(S.injury,1);say('패배하면서 다쳐 버렸다…')}}
+  if(B.rival&&res)recordRivalResult(B,res);
   checkUnlocks();save();
   const after=()=>{
     const eps=[];const tot=S.wins+S.tagWins;
-    if(res==='win'&&tot===1)eps.push('첫 승리, 우리는 파트너');
-    else if(res==='win'&&tot%10===0)eps.push(`${tot}번째 승리의 노래`);
-    if(res==='lose'&&S.losses+S.tl===1)eps.push('패배의 밤, 다시 일어서는 법');
+    if(!B.rival&&res==='win'&&tot===1)eps.push('첫 승리, 우리는 파트너');
+    else if(!B.rival&&res==='win'&&tot%10===0)eps.push(`${tot}번째 승리의 노래`);
+    if(!B.rival&&res==='lose'&&S.losses+S.tl===1)eps.push('패배의 밤, 다시 일어서는 법');
     if(eps.length)cine(async()=>{for(const e of eps)await showEpisode(e)});
-    if(res==='win'){speak(pick(['이겼다! 봤지, {T}?','우리 둘이면 무적이야!','후우… {T}가 있어서 이길 수 있었어.']));setMode('bcont',{opt:0,type:B.type,mate:B.mate});say('A: 계속 / 처음부터 · B: 결정 · C: 끝',0)}
+    if(res==='win'){
+      speak(pick(['이겼다! 봤지, {T}?','우리 둘이면 무적이야!','후우… {T}가 있어서 이길 수 있었어.']));
+      if(B.rival){
+        setMode('main');say('글리치의 전투 기록을 열어 봐.');
+      }else{
+        setMode('bcont',{opt:0,type:B.type,mate:B.mate});say('A: 계속 / 처음부터 · B: 결정 · C: 끝',0);
+      }
+    }
     else{if(res==='lose')speak('미안, {T}… 다음엔 꼭 이길게.');setMode('main')}
   };
   if(B.resonated&&B.team[0]!==B.base){setMode('revert',{from:B.team[0],to:B.base,next:after});say(`${nm(B.base)}${J(nm(B.base),'으로','로')} 돌아왔다`)}
@@ -1466,6 +1581,28 @@ function drawScene(night){
   if(night){spr(SPR.moon,W-9,2);[[8,4],[20,2],[33,6],[46,3]].forEach(([x,y],i)=>{if(blink(700+i*130))px(x,y,SHINE);else px(x,y,INK1)})}
   else{const cx=Math.round(W-((now_()/220)%(W+12)));spr(SPR.cloud,cx,3);spr(SPR.cloud,Math.round((cx+38)%(W+12)-8),10)}
 }
+function drawSnack(phase,partnerX,now){
+  const color=palOf('meat')[1],meat=palOf('meat')[2];
+  const x=phase==='hiding'&&!S.sleeping?Math.max(1,partnerX-4):SNACK_X;
+  if(phase==='crumbs'||(phase==='eating'&&now-S.snackAt>SNACK_DELAY+6000)){
+    px(x,GROUND,color);px(x+2,GROUND+1,meat);px(x+4,GROUND,color);
+  }else{
+    rect(x,GROUND-2,3,2,meat);px(x,GROUND-1,color);px(x+3,GROUND-1,color);px(x+1,GROUND-2,SHINE);
+  }
+}
+function inspectSnack(event){
+  if(mode.name!=='main'||S.gone||S.sleeping||partnerOut)return;
+  const phase=snackPhase();
+  if(!phase||phase==='hiding')return;
+  const rect=lcd.getBoundingClientRect();
+  const x=(event.clientX-rect.left)*W/rect.width,y=(event.clientY-rect.top)*H/rect.height;
+  if(x>SNACK_X+9||y<GROUND-14)return;
+  if(phase==='crumbs'){say('구석에 부스러기만 남았다.');return}
+  if(phase==='hidden'){
+    mode.snackPeek=Date.now()+2600;
+    say('그건 나중에 먹으려고 남겨 둔 거야.');
+  }else say('응, 아까 네가 준 거야. 지금 먹고 있어.');
+}
 function drawHearts(n,y){for(let i=0;i<4;i++)spr(i<n?SPR.heart:SPR.heartE,14+i*9,y)}
 function center(id,fk,o={}){const s=frame(id,fk);spr(s,Math.round((W-s.w)/2)+(o.dx||0),GROUND-s.h+1+(o.dy||0),o)}
 function menu2(a,b,opt,y1=10,y2=26){text(a,14,y1);text(b,14,y2);text('>',blink(300,0)?6:7,opt===0?y1:y2)}
@@ -1490,9 +1627,22 @@ function draw(){
       if(m.name==='main'&&!S.sleeping&&P.bob&&fr!=='squash')y-=1;
       if(m.name==='refuse'){flip=blink(180);x=Math.round((W-base.w)/2);fr='angry';spr(SPR.anger,x+base.w,y)}
       if(m.name==='talk'){x=Math.round((W-base.w)/2);flip=false;fr='happy';y-=blink(220)?3:0;if(blink(300))spr(SPR.heart,x+base.w+1>W-8?x-9:x+base.w+1,y);else spr(SPR.note,x-6,y+2)}
-      if(m.name==='eat'){x=W-base.w-6;flip=false;const bites=Math.min(3,Math.floor(m.t/600));const food=SPR[m.food];fr=blink(150)?'eat':null;
+      if(m.name==='eat'){x=W-base.w-6;flip=false;const bites=Math.min(m.savesBite?2:3,Math.floor(m.t/600));const food=SPR[m.food];fr=blink(150)?'eat':null;
         if(bites<3){const keep=food.w-Math.round(food.w*bites/3);const part={w:food.w,h:food.h,d:food.d.map((v,i)=>(i%food.w)<keep?v:0),key:m.food};spr(part,x-food.w-3,GROUND-food.h+1)}}
       if(m.name==='heal'){x=Math.round((W-base.w)/2);if(blink(200))spr(SPR.cross,3,4);fr=m.t>900?'happy':'blink'}
+      if(m.name==='main'&&!partnerOut){
+        const now=Date.now(),phase=snackPhase(now);
+        const peeking=m.snackPeek>now;
+        if(!S.sleeping&&(peeking||phase==='hiding'||phase==='eating')){
+          const progress=peeking?clamp((2600-(m.snackPeek-now))/450,0,1)
+            :phase==='hiding'?clamp((now-S.snackAt-1900)/1600,0,1):1;
+          const target=peeking?SNACK_X-2:SNACK_X+5;
+          x=Math.round(x+(target-x)*progress);
+          flip=peeking;
+          fr=peeking?'angry':phase==='eating'&&blink(140)?'eat':fr;
+        }
+        if(phase)drawSnack(phase,x,now);
+      }
       if(!partnerOut)spr(frame(f,fr),x,y,{flip});
       if(S.sleeping&&!S.lightsOn&&!partnerOut){const by=y+Math.round(base.h*.5);rect(x-1,by,base.w+2,GROUND-by+1,palOf('bed')[2]);rect(x-1,by,base.w+2,1,palOf('bed')[1]);for(let i=x+1;i<x+base.w;i+=3)px(i,by+2,palOf('bed')[3])}
       if(m.name==='main'&&!S.sleeping&&(S.hunger===0||S.injury)&&blink(500))spr(SPR.sweat,x+base.w-2,y+2);
@@ -1616,8 +1766,8 @@ function paintCard(){
 let last=performance.now(),acc=0,saveT=0,cardT=0;
 function frameLoop(now){
   const dt=Math.min(100,now-last);last=now;
-  if(S&&!paused){
-    acc+=dt*SET.speed;while(acc>=1000){acc-=1000;tick(1000,Date.now(),true)}
+  if(S&&!paused&&!saveConflict){
+    acc+=dt;while(acc>=1000){acc-=1000;tick(1000*SET.speed,Date.now(),true)}
     update(dt);
     saveT+=dt;if(saveT>5000){saveT=0;save()}
   }
@@ -2110,13 +2260,180 @@ $('#sheetClose').onclick=()=>{$('#sheet').hidden=true};
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab)});
 let resetArm=0;
-$('#resetBtn').onclick=()=>{const b=$('#resetBtn');if(Date.now()-resetArm<4000){store.del(SAVE);location.reload();return}resetArm=Date.now();b.textContent='정말 지울까? 한 번 더 누르면 처음부터';setTimeout(()=>b.textContent='처음부터 다시 시작',4000)};
+$('#resetBtn').onclick=()=>{const b=$('#resetBtn');if(Date.now()-resetArm<4000){withSaveLock(()=>{localStorage.removeItem(SAVE);saveConflict=true;location.reload()});return}resetArm=Date.now();b.textContent='정말 지울까? 한 번 더 누르면 처음부터';setTimeout(()=>b.textContent='처음부터 다시 시작',4000)};
+
+/* ================= Glitch rival transmission ================= */
+const rivalDialog = $('#rivalDialog');
+const rivalInput = $('#rivalInput');
+const rivalStatus = $('#rivalStatus');
+let rivalGenerate, rivalJob;
+let rivalView, rivalEncounter;
+let rivalModelState = 'idle';
+
+function paintRivalButton() {
+  const button = $('#rivalBtn');
+  const challenge = mode.name === 'bmenu';
+  button.hidden = !S || !(challenge || (['main', 'bcont'].includes(mode.name) && S.rival?.last));
+  button.textContent = challenge ? '글리치 신호' : '글리치의 전투 기록';
+}
+
+async function requestRival(context, onProgress) {
+  if (rivalJob) throw Error('Model busy');
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), context ? 75e3 : 15 * 60e3);
+  let finish;
+  rivalJob = {done: new Promise(resolve => {finish = resolve})};
+  try {
+    if (!context) {
+      const {loadRivalModel} = await import('./rival-model.mjs');
+      rivalGenerate = await loadRivalModel({signal: abort.signal, onProgress});
+      rivalModelState = 'ready';
+      return;
+    }
+    return await rivalGenerate(context, abort.signal);
+  } finally {
+    clearTimeout(timer);
+    rivalJob = null;
+    finish();
+  }
+}
+
+function paintRivalDialog() {
+  const pre = rivalView === 'pre';
+  const record = S.rival?.last;
+  const exchange = rivalEncounter?.exchange;
+  $('#rivalTitle').textContent = pre ? '글리치 통신' : '글리치의 전투 기록';
+  $('#rivalReply').textContent = pre
+    ? exchange?.reply || (exchange ? '글리치가 신호를 받았다.' : record ? '또 네 신호네. 이번엔 무슨 일이야?' : '이 신호를 잡았어? 네 파트너와 한 번 겨뤄 보고 싶어.')
+    : record.line;
+  const score=S.rival?.score;
+  $('#rivalScore').hidden=!score;
+  if(score)$('#rivalScore').textContent=`라이벌 전적 · ${score.win}승 ${score.lose}패 ${score.draw}무`;
+  $('#rivalForm').hidden = !pre;
+  $('#rivalFight').hidden = !pre;
+  $('#rivalSetup').hidden = !pre || rivalModelState === 'ready' || Boolean(rivalJob);
+  rivalInput.disabled = !pre || rivalModelState !== 'ready' || Boolean(exchange || rivalJob);
+  $('#rivalSend').disabled = rivalInput.disabled;
+  if (rivalJob) rivalStatus.textContent = rivalJob.status || '글리치의 답을 기다리는 중…';
+  else if (pre && rivalModelState !== 'ready') rivalStatus.textContent = '모델을 준비하거나 바로 출격할 수 있어요.';
+  else if (pre && exchange) rivalStatus.textContent = '이번 만남의 메시지를 저장했어요.';
+  else rivalStatus.textContent = '';
+}
+
+async function prepareRivalModel() {
+  if (rivalJob) return;
+  const dialogWasOpen = () => rivalDialog.open && rivalView === 'pre';
+  const pending = requestRival(null, percent => {
+    rivalJob.status = `모델 받는 중 ${percent}%`;
+    if (dialogWasOpen()) paintRivalDialog();
+  });
+  if (rivalJob) rivalJob.status = '기기 내 모델을 준비하는 중…';
+  if (dialogWasOpen()) paintRivalDialog();
+  try {
+    await pending;
+    SET.rivalModel = true;
+    store.set(SETK, SET);
+    if (dialogWasOpen()) paintRivalDialog();
+  } catch {
+    if (dialogWasOpen()) {
+      paintRivalDialog();
+      rivalStatus.textContent = '모델을 준비할 수 없어요. 다시 받거나 출격할 수 있어요.';
+    }
+  }
+}
+
+$('#rivalSetup').onclick = prepareRivalModel;
+$('#rivalClose').onclick = () => rivalDialog.close();
+$('#rivalBtn').onclick = () => {
+  if (!S || busy()) return;
+  rivalView = mode.name === 'bmenu' ? 'pre' : 'post';
+  if (rivalView === 'pre' && rivalEncounter?.mode !== mode) {
+    rivalEncounter = {mode, exchange: null, previous: S.rival?.exchange || null};
+    rivalInput.value = '';
+  }
+  paintRivalDialog();
+  rivalDialog.showModal();
+  if (rivalView === 'pre' && SET.rivalModel && rivalModelState === 'idle' && !rivalJob) {
+    prepareRivalModel();
+  }
+};
+
+$('#rivalForm').onsubmit = async event => {
+  event.preventDefault();
+  const message = rivalInput.value.trim();
+  const encounter = rivalEncounter;
+  if (!message || rivalView !== 'pre' || encounter.exchange || rivalModelState !== 'ready' || rivalJob) return;
+  const journal = S.rival ??= {};
+  const exchange = encounter.exchange = journal.exchange = {message};
+  const previous = encounter.previous;
+  save();
+  const pending = requestRival({
+    장면: '출격 전, 플레이어의 새 말에 직접 답한다',
+    파트너: nm(S.form),
+    지난전투: journal.last?.facts,
+    지난대화: previous,
+    플레이어: message,
+  });
+  paintRivalDialog();
+  try {
+    exchange.reply = await pending;
+    save();
+    if (rivalDialog.open && rivalEncounter === encounter && rivalView === 'pre') paintRivalDialog();
+  } catch {
+    if (rivalDialog.open && rivalEncounter === encounter && rivalView === 'pre') {
+      paintRivalDialog();
+      rivalStatus.textContent = '답이 오지 않았어요. 메시지는 기억에 남겨 뒀어요.';
+    }
+  }
+};
+
+$('#rivalFight').onclick = () => {
+  if (mode.name !== 'bmenu' || rivalView !== 'pre') return;
+  rivalDialog.close();
+  const why = battleBlock();
+  if (why) return refuse(why);
+  startBattle('single', {enemy: 'glitch', rival: true});
+};
+
+function recordRivalResult(battle, result) {
+  const journal = S.rival ??= {};
+  const score=journal.score??={win:0,lose:0,draw:0};
+  score[result]++;
+  const facts = {
+    파트너: nm(battle.base),
+    플레이어결과: {win: '승리', lose: '패배', draw: '무승부'}[result],
+    양쪽체력: `파트너 ${Math.max(0,battle.php)}, 글리치 ${Math.max(0,battle.ehp)}`,
+    응원: battle.totalMash + battle.cheers,
+    공명: battle.resonated ? '함' : '없음',
+  };
+  const lines = {
+    win: '이번엔 네가 앞섰네. 다음에 같은 신호로 다시 올게.',
+    lose: '아직 네 신호가 들려. 다시 오면 그때도 받아 주지.',
+    draw: '끝까지 서로 신호를 놓치지 않았네. 다음엔 결판을 내자.',
+  };
+  const record = journal.last = {facts, line: lines[result]};
+  if (rivalModelState !== 'ready') return;
+  const exchange = journal.exchange;
+  const pending = rivalJob?.done || Promise.resolve();
+  pending.then(() => {
+    if (S.rival?.last !== record) return;
+    const response = requestRival({장면: '전투 직후, 실제 결과나 행동에 대해 한마디 한다', 전투: facts, 지난대화: exchange});
+    if (rivalDialog.open) paintRivalDialog();
+    return response;
+  }).then(line => {
+    if (!line || S.rival?.last !== record) return;
+    record.line = line;
+    save();
+  }).catch(() => {}).finally(() => {
+    if (rivalDialog.open) paintRivalDialog();
+  });
+}
 
 /* ================= input wiring ================= */
 ['A','B','C'].forEach(k=>{const b=$('#b'+k);b.addEventListener('pointerdown',e=>{e.preventDefault();held[k]=true;press(k)});
   ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{held[k]=false}));b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();press(k)}})});
 addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||!$('#sheet').hidden)return;
+  if(saveConflict||e.target.tagName==='INPUT'||!$('#sheet').hidden||$('#rivalDialog').open||$('#installGuide').open)return;
   const k=e.key.toLowerCase();
   const key=['z','a','1'].includes(k)?'A':['x','s','2','enter',' '].includes(k)?'B':['c','d','3','escape','backspace'].includes(k)?'C':null;
   if(!key)return;if(key==='B')e.preventDefault();if(e.repeat)return;held[key]=true;press(key);
@@ -2127,7 +2444,13 @@ $('#cut').addEventListener('pointerdown',()=>cineTap());
 (function(){const scr=$('#screen');let t=0,fired=false;
   scr.addEventListener('contextmenu',e=>e.preventDefault());
   scr.addEventListener('pointerdown',e=>{fired=false;clearTimeout(t);t=setTimeout(()=>{fired=true;if(!S||busy()||mode.name!=='main'||stageOf(S.form)===0||S.sleeping)return;ac();vib(30);petStart()},600)});
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>scr.addEventListener(ev,()=>{clearTimeout(t);if(ev==='pointerup'&&!fired){ac();if(S&&!busy()&&eggReady&&stageOf(S.form)===0)hatchStart()}}));
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>scr.addEventListener(ev,event=>{
+    clearTimeout(t);
+    if(ev!=='pointerup'||fired||!S||busy())return;
+    ac();
+    if(eggReady&&stageOf(S.form)===0)hatchStart();
+    else if(stageOf(S.form)>0)inspectSnack(event);
+  }));
 })();
 $('#replayBtn').onclick=()=>{$('#sheet').hidden=true;runIntro(true)};
 $('#ep').addEventListener('pointerdown',()=>cineTap());
@@ -2139,25 +2462,46 @@ addEventListener('pagehide',save);
 addEventListener('resize',sizeLcd);
 
 /* ================= home-screen app ================= */
-(function(){let framed=true;try{framed=window.self!==window.top}catch(e){}
-  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if(standalone)document.documentElement.classList.add('standalone');
-  if(!framed&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator)addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
-  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  if(!framed&&ios&&!standalone){const t=$('#installTip');if(t)t.hidden=false}
-})();
+const INSTALL_GUIDE_KEY='codelinker.install-guide.v1';
+const installGuide=$('#installGuide');
+let installShownOnLaunch=false;
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isSafari=/Version\//.test(navigator.userAgent)&&/Safari\//.test(navigator.userAgent);
+const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(isStandalone)document.documentElement.classList.add('standalone');
+const canShowInstallGuide=window.self===window.top&&location.protocol==='https:'&&isIOS&&isSafari&&!isStandalone;
+
+function openInstallGuide(onLaunch){
+  installShownOnLaunch=onLaunch;
+  $('#installContinue').textContent=onLaunch?(S?'지금은 사파리에서 계속':'지금은 사파리에서 시작'):'닫기';
+  installGuide.showModal();
+}
+installGuide.addEventListener('close',()=>{
+  if(!installShownOnLaunch)return;
+  installShownOnLaunch=false;
+  store.set(INSTALL_GUIDE_KEY,true);
+  if(!S)runIntro();
+});
+const installHelp=$('#installHelp');
+installHelp.hidden=!canShowInstallGuide;
+installHelp.onclick=()=>openInstallGuide(false);
+
+if(window.self===window.top&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator){
+  addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+}
 /* ================= boot ================= */
 function boot(){
   sizeLcd();
-  const saved=store.get(SAVE);
+  let saved;
+  try{savedSnapshot=localStorage.getItem(SAVE);saved=JSON.parse(savedSnapshot)}catch{}
   if(saved&&saved.v===1){
-    S=migrate(saved);applyShell(S.color);
+    S=migrate(saved);applyShell(S.color);paintRivalButton();
     const el=catchUp();if(!S.gone)P.x=Math.round((W-SPR[S.form].w)/2);
     say(idleMsg());
     setTimeout(()=>speak(el>120e3?`{T}! 돌아왔구나. ${Math.round(el/60000)}분 동안 기다렸어!`:'어서 와, {T}! 오늘도 같이 있자.'),500);
-  }else{
-    runIntro();
   }
+  if(canShowInstallGuide&&!store.get(INSTALL_GUIDE_KEY))openInstallGuide(true);
+  else if(!S)runIntro();
   requestAnimationFrame(frameLoop);
 }
 boot();
