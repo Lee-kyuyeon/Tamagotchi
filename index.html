@@ -678,7 +678,7 @@ const DEX_ORDER=VER_ORDER.flatMap(v=>{const V=VERS[v];return V.special?[V.egg,..
 /* time per stage (awake time only) and requirements, for the two time modes */
 const TT={orig:[60e3,600e3,6*3600e3,24*3600e3,36*3600e3,48*3600e3],fast:[25e3,120e3,360e3,900e3,1500e3,1800e3]};
 const REQ={orig:{b:15,w:12,tr:16,zw:50,xs:12,tag:10,wake:15*60e3,nap:3*3600e3,inj:6*3600e3,vit:30*60e3,sleepVit:6*60e3},
-           fast:{b:6,w:4,tr:6,zw:30,xs:12,tag:3,wake:5*60e3,nap:3*60e3,inj:8*60e3,vit:60e3,sleepVit:6e3}};
+           fast:{b:6,w:4,tr:6,zw:30,xs:12,tag:3,wake:5*60e3,nap:3*60e3,inj:20*60e3,vit:60e3,sleepVit:6e3}};
 const TM=()=>SET.timeMode==='fast'?'fast':'orig';
 const R=()=>REQ[TM()];
 const stageTime=st=>TT[TM()][Math.min(st,5)];
@@ -900,6 +900,7 @@ function callReasons(){
   if(S.strength===0)r.push('힘이 없어…');
   if(S.poop>=3)r.push('지저분해…');
   if(S.sleeping&&S.lightsOn)r.push('눈부셔… 불 꺼 줘');
+  if(S.sleeping)return r.filter(x=>x.startsWith('눈부셔'));
   return r;
 }
 function isNight(ts){const h=new Date(ts).getHours();return h>=0&&h<7}
@@ -919,12 +920,13 @@ function tick(ms,realNow,live){
     S.vitT+=ms;if(S.vitT>=R().vit){S.vitT=0;S.vit=Math.min(10,S.vit+1)}
   }
   if(S.poop>=4&&!S.injury){S.tSick+=ms;if(S.tSick>=SICK_MS){S.injury=1;S.tSick=0;if(live){say('지저분해서 다쳐 버렸다!');SFX.call()}}}else if(S.poop<4)S.tSick=0;
-  if(S.injury){S.injT+=ms;if(S.injT>=R().inj){S.injT=0;if(live)partnerLost();else S.lostPending=true;return}}else S.injT=0;
+  const rms=live?ms/Math.max(1,SET.speed):ms; // the speed-up setting only hurries growth, never neglect
+  if(S.injury){S.injT+=rms;if(S.injT>=R().inj){S.injT=0;S.lostPending=true;if(live&&mode.name==='main'&&!busy()){S.lostPending=false;partnerLost()}return}}else S.injT=0;
   const rs=callReasons();
   if(rs.length){
-    if(!S.callSince){S.callSince=S.age;if(live){SFX.call();vib([60,60,60]);say('!! '+rs[0])}}
-    else if(S.age-S.callSince>CALL_MS){addMistake(live);S.callSince=S.age}
-  }else S.callSince=0;
+    if(!S.callSince){S.callSince=1;S.callT=0;if(live){SFX.call();vib([60,60,60]);say('!! '+rs[0])}}
+    else{S.callT=(S.callT||0)+rms;if(S.callT>CALL_MS){addMistake(live);S.callT=0}}
+  }else{S.callSince=0;S.callT=0}
 }
 function catchUp(){
   if(!S)return 0;
@@ -1010,8 +1012,7 @@ function doAction(id){
       setMode('train',{phase:'ready',mash:0});say('「!」가 뜨면 A를 연타!');SFX.ok();break;
     case 'battle':
       if(st<3)return refuse(egg?'아직 알이야':'전사기가 되면 싸울 수 있어');
-      if(S.sleeping)return sleepNo();if(S.injury)return refuse('다쳐서 싸울 수 없어…');
-      if(S.vit<=0)return refuse('체력이 없어… 재우거나 프로틴을 줘');if(S.hunger===0)return refuse('배고파서 힘이 안 나…');
+      if(S.sleeping)return sleepNo();{const why=battleBlock();if(why)return refuse(why)}
       setMode('bmenu',{opt:0});say('A: 싱글/태그 · B: 결정');SFX.ok();break;
     case 'album':setMode('album',{idx:0});SFX.ok();break;
     case 'clean':if(S.poop===0){say('이미 깨끗해!');SFX.ok();return}setMode('clean');SFX.clean();break;
@@ -1025,6 +1026,7 @@ function doAction(id){
       if(S.gt-S.lastTalk>30e3){bondAdd(2);S.lastTalk=S.gt}save();break;
   }
 }
+function battleBlock(){if(S.sleeping)return '자고 있어… (불 → WAKE)';if(S.injury)return '다쳐서 싸울 수 없어…';if(S.vit<=0)return '체력이 없어… 재우거나 프로틴을 줘';if(S.hunger===0)return '배고파서 힘이 안 나…';return null}
 function lightsDo(opt){
   const st=stageOf(S.form);
   if(opt===0){ // WAKE
@@ -1061,11 +1063,11 @@ function feedDo(){
   SFX.eat();save();
 }
 
-const downAt={A:-1e9,B:-1e9,C:-1e9};
+const downAt={A:-1e9,B:-1e9,C:-1e9},held={A:false,B:false,C:false};
 function press(btn){
   ac();
   const b=$('#b'+btn);b.classList.add('down');const dv=$('#device');dv.classList.add('press');setTimeout(()=>{b.classList.remove('down');dv.classList.remove('press')},90);
-  const now=performance.now();const other=k=>now-downAt[k]<260;downAt[btn]=now;
+  const now=performance.now();const other=k=>held[k]&&now-downAt[k]<1500;downAt[btn]=now;
   if(cineTap())return;
   if(busy()||!S)return;
   const m=mode.name;
@@ -1099,7 +1101,7 @@ function press(btn){
   if(m==='bcont'){
     if(btn==='A'){mode.opt^=1;SFX.sel();return}if(btn==='C'){back();return}
     if(mode.opt===1){S.ladder=0;say('처음 상대부터 다시 도전!');}
-    if(S.vit<=0)return refuse('체력이 없어… 오늘은 여기까지');if(S.injury)return refuse('다쳐서 더 싸울 수 없어');
+    {const why=battleBlock();if(why)return refuse(why)}
     startBattle(mode.type,{mate:mode.mate});return;
   }
   if(m==='album'){const n=S.album.length+1;if(btn==='A'){mode.idx=(mode.idx+1)%n;SFX.sel()}else if(btn==='C')back();else{mode.detail=!mode.detail;SFX.sel()}return}
@@ -1110,7 +1112,7 @@ function press(btn){
     return;
   }
   if(m==='alarm'){
-    if(btn==='B'){vib(0);if(S.vit<=0){setMode('main');refuse('체력이 없어 싸울 수 없다…');return}startBattle('single',{enemy:mode.enemy,alarm:true})}
+    if(btn==='B'){vib(0);{const why=battleBlock();if(why){$('#lamp').classList.remove('on');S.encAt=Date.now()+rnd(180e3,300e3);refuse(why);return}}startBattle('single',{enemy:mode.enemy,alarm:true})}
     else if(btn==='C'){vib(0);setMode('main');say('적 신호를 피했다');S.encAt=Date.now()+rnd(180e3,300e3);$('#lamp').classList.remove('on')}
     return;
   }
@@ -1217,7 +1219,7 @@ function endBattle(res){
     if(res==='win'){speak(pick(['이겼다! 봤지, {T}?','우리 둘이면 무적이야!','후우… {T}가 있어서 이길 수 있었어.']));setMode('bcont',{opt:0,type:B.type,mate:B.mate});say('A: 계속 / 처음부터 · B: 결정 · C: 끝',0)}
     else{if(res==='lose')speak('미안, {T}… 다음엔 꼭 이길게.');setMode('main')}
   };
-  if(B.cur!==B.base){setMode('revert',{from:B.cur,to:B.base,next:after});say(`${nm(B.base)}${J(nm(B.base),'으로','로')} 돌아왔다`)}
+  if(B.resonated&&B.team[0]!==B.base){setMode('revert',{from:B.team[0],to:B.base,next:after});say(`${nm(B.base)}${J(nm(B.base),'으로','로')} 돌아왔다`)}
   else after();
 }
 
@@ -1475,7 +1477,7 @@ function drawBattle(B){
   const pid=B.cur,eid=B.eid,ps=SPR[pid],es=SPR[eid];
   const G=palOf('ground');for(let x=0;x<W;x++){px(x,GROUND+1,G[1]);px(x,GROUND+2,G[2]);px(x,GROUND+3,G[2])}
   hpBar(1,B.php,B.pmax,palOf('heart')[4]);hpBar(W-29,B.ehp,B.emax,palOf('orb')[4]);
-  if(B.type==='tag')text('T',30,1);text(String(Math.min(6,B.turn+1)),33,1,INK2);
+  text(String(Math.min(6,B.turn+1)),31,1,INK2);
   const pX=2,pY=GROUND-ps.h+1,eX=W-es.w-2,eY=GROUND-es.h+1;
   const sh=shotSprite(pid),shY=GROUND-Math.round(Math.min(ps.h,es.h)/2)-2;
   switch(B.phase){
@@ -1898,6 +1900,7 @@ function warp(c,src,VWo,VHo,cx,cy,A){
 function waitTap(ms){return new Promise(r=>{let done=false;const fin=()=>{if(done)return;done=true;$('#intro').removeEventListener('pointerdown',fin);r()};$('#intro').addEventListener('pointerdown',fin);if(ms)setTimeout(fin,ms)})}
 async function runIntro(replay=false){
   const intro=$('#intro'),cv=$('#opcv'),sub=$('#introSay'),tapEl=$('#introTap'),skipB=$('#opSkip');
+  if(replay)cineBusy++;
   intro.hidden=false;OP.skip=false;skipB.hidden=!replay;skipB.onclick=e=>{e.stopPropagation();OP.skip=true};
   const d=Math.min(2,devicePixelRatio||1),VWo=innerWidth,VHo=innerHeight;cv.width=VWo*d;cv.height=VHo*d;const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
   OPC=c;const born=new Date(),tod=todOf(born.getHours()),pal=OPAL[tod],ds=fmtDate(born);
@@ -1961,7 +1964,7 @@ async function runIntro(replay=false){
   caption('따뜻해… 살아 있는 것 같아.',true);
   setTimeout(()=>{if(rcv)caption('이 알을 받아 줄래? — 알을 눌러 줘')},2200);
   await opScene(600000,(p,el)=>drawRecv(el),{});
-  if(replay){rcv=false;await anim(500,p=>{drawRecv(0);c.fillStyle=`rgba(0,0,0,${p})`;c.fillRect(0,0,VWo,VHo)});Drone.stop();intro.hidden=true;sub.textContent='';return}
+  if(replay){rcv=false;await anim(500,p=>{drawRecv(0);c.fillStyle=`rgba(0,0,0,${p})`;c.fillRect(0,0,VWo,VHo)});Drone.stop();intro.hidden=true;sub.textContent='';cineBusy--;return}
   // name & device colour, while the egg keeps glowing
   sub.classList.add('dim');let formOpen=true;const t0=performance.now();
   (function loop(n){if(!formOpen)return;drawRecv(n-t0);requestAnimationFrame(loop)})(performance.now());
@@ -2038,12 +2041,16 @@ let resetArm=0;
 $('#resetBtn').onclick=()=>{const b=$('#resetBtn');if(Date.now()-resetArm<4000){store.del(SAVE);location.reload();return}resetArm=Date.now();b.textContent='정말 지울까? 한 번 더 누르면 처음부터';setTimeout(()=>b.textContent='처음부터 다시 시작',4000)};
 
 /* ================= input wiring ================= */
-['A','B','C'].forEach(k=>{const b=$('#b'+k);b.addEventListener('pointerdown',e=>{e.preventDefault();press(k)});b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();press(k)}})});
+['A','B','C'].forEach(k=>{const b=$('#b'+k);b.addEventListener('pointerdown',e=>{e.preventDefault();held[k]=true;press(k)});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{held[k]=false}));b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();press(k)}})});
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||!$('#sheet').hidden)return;
   const k=e.key.toLowerCase();
-  if(['z','a','1'].includes(k))press('A');else if(['x','s','2','enter',' '].includes(k)){e.preventDefault();press('B')}else if(['c','d','3','escape','backspace'].includes(k))press('C');
+  const key=['z','a','1'].includes(k)?'A':['x','s','2','enter',' '].includes(k)?'B':['c','d','3','escape','backspace'].includes(k)?'C':null;
+  if(!key)return;if(key==='B')e.preventDefault();if(e.repeat)return;held[key]=true;press(key);
 });
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();const key=['z','a','1'].includes(k)?'A':['x','s','2','enter',' '].includes(k)?'B':['c','d','3','escape','backspace'].includes(k)?'C':null;if(key)held[key]=false});
+addEventListener('blur',()=>{held.A=held.B=held.C=false});
 $('#cut').addEventListener('pointerdown',()=>cineTap());
 (function(){const scr=$('#screen');let t=0,fired=false;
   scr.addEventListener('contextmenu',e=>e.preventDefault());
