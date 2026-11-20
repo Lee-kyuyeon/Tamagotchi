@@ -29,7 +29,7 @@ export async function loadRivalModel({signal, onProgress}) {
       {role: 'user', content: playerMessage || '방금 나랑 싸워 보니까 어땠어?'},
     ];
     const reply = await engine.createChatCompletion(messages, {
-      nPredict: 36, sampling: {temp: 0.35}, useCache: true, abortSignal,
+      nPredict: 36, sampling: {temp: 0.35}, abortSignal,
     });
     abortSignal.throwIfAborted();
     const cleaned = reply.trim().replace(/^[“"'「]+|[”"'」]+$/g, '').replace(/\s+/g, ' ');
