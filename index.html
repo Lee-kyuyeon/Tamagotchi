@@ -2160,8 +2160,9 @@ function paintRivalButton() {
 async function requestRival(context, onProgress) {
   if (rivalJob) throw Error('Model busy');
   const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), context ? 40e3 : 15 * 60e3);
-  rivalJob = {};
+  const timer = setTimeout(() => abort.abort(), context ? 75e3 : 15 * 60e3);
+  let finish;
+  rivalJob = {done: new Promise(resolve => {finish = resolve})};
   try {
     if (!context) {
       const {loadRivalModel} = await import('./rival-model.mjs');
@@ -2173,6 +2174,7 @@ async function requestRival(context, onProgress) {
   } finally {
     clearTimeout(timer);
     rivalJob = null;
+    finish();
   }
 }
 
@@ -2189,7 +2191,7 @@ function paintRivalDialog() {
   $('#rivalSetup').hidden = !pre || rivalModelState === 'ready' || Boolean(rivalJob);
   rivalInput.disabled = !pre || rivalModelState !== 'ready' || Boolean(exchange || rivalJob);
   $('#rivalSend').disabled = rivalInput.disabled;
-  if (pre && rivalJob) rivalStatus.textContent = rivalJob.status || '글리치의 답을 기다리는 중…';
+  if (rivalJob) rivalStatus.textContent = rivalJob.status || '글리치의 답을 기다리는 중…';
   else if (pre && rivalModelState !== 'ready') rivalStatus.textContent = '모델을 준비하거나 바로 출격할 수 있어요.';
   else if (pre && exchange) rivalStatus.textContent = '이번 만남의 메시지를 저장했어요.';
   else rivalStatus.textContent = '';
@@ -2285,15 +2287,21 @@ function recordRivalResult(battle, result) {
     draw: '끝까지 서로 신호를 놓치지 않았네. 다음엔 결판을 내자.',
   };
   const record = journal.last = {facts, line: lines[result]};
-  if (rivalModelState !== 'ready' || rivalJob) return;
-  requestRival({장면: '전투 직후, 실제 결과나 행동에 대해 한마디 한다', 전투: facts, 지난대화: journal.exchange})
-    .then(line => {
-      if (S.rival?.last !== record) return;
-      record.line = line;
-      save();
-    }).catch(() => {}).finally(() => {
-      if (rivalDialog.open) paintRivalDialog();
-    });
+  if (rivalModelState !== 'ready') return;
+  const exchange = journal.exchange;
+  const pending = rivalJob?.done || Promise.resolve();
+  pending.then(() => {
+    if (S.rival?.last !== record) return;
+    const response = requestRival({장면: '전투 직후, 실제 결과나 행동에 대해 한마디 한다', 전투: facts, 지난대화: exchange});
+    if (rivalDialog.open) paintRivalDialog();
+    return response;
+  }).then(line => {
+    if (!line || S.rival?.last !== record) return;
+    record.line = line;
+    save();
+  }).catch(() => {}).finally(() => {
+    if (rivalDialog.open) paintRivalDialog();
+  });
 }
 
 /* ================= input wiring ================= */
