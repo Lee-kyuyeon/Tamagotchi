@@ -1156,7 +1156,7 @@ function setMode(name,data={}){
   if(name==='main')glow(false);
   paintRivalButton();
 }
-function busy(){return saveConflict||paused||cineBusy>0||rivalDialog.open}
+function busy(){return saveConflict||paused||cineBusy>0||rivalDialog.open||$('#installGuide').open}
 function curForm(){return (mode.name==='battle'&&mode.B)?mode.B.cur:(S&&!S.gone?S.form:'egg')}
 function refuse(m){setMode('refuse');say(m);SFX.no()}
 
@@ -2462,22 +2462,22 @@ addEventListener('resize',sizeLcd);
 /* ================= home-screen app ================= */
 const INSTALL_GUIDE_KEY='codelinker.install-guide.v1';
 const installGuide=$('#installGuide');
-let installStartsGame=false;
+let installShownOnLaunch=false;
 const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const isSafari=/Version\//.test(navigator.userAgent)&&/Safari\//.test(navigator.userAgent);
 const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const canShowInstallGuide=window.self===window.top&&location.protocol==='https:'&&isIOS&&isSafari&&!isStandalone;
 
-function openInstallGuide(firstRun){
-  installStartsGame=firstRun;
-  $('#installContinue').textContent=firstRun?'지금은 사파리에서 시작':'닫기';
+function openInstallGuide(onLaunch){
+  installShownOnLaunch=onLaunch;
+  $('#installContinue').textContent=onLaunch?(S?'지금은 사파리에서 계속':'지금은 사파리에서 시작'):'닫기';
   installGuide.showModal();
 }
 installGuide.addEventListener('close',()=>{
-  if(!installStartsGame)return;
-  installStartsGame=false;
+  if(!installShownOnLaunch)return;
+  installShownOnLaunch=false;
   store.set(INSTALL_GUIDE_KEY,true);
-  runIntro();
+  if(!S)runIntro();
 });
 const installHelp=$('#installHelp');
 installHelp.hidden=!canShowInstallGuide;
@@ -2496,11 +2496,9 @@ function boot(){
     const el=catchUp();if(!S.gone)P.x=Math.round((W-SPR[S.form].w)/2);
     say(idleMsg());
     setTimeout(()=>speak(el>120e3?`{T}! 돌아왔구나. ${Math.round(el/60000)}분 동안 기다렸어!`:'어서 와, {T}! 오늘도 같이 있자.'),500);
-  }else if(canShowInstallGuide&&!store.get(INSTALL_GUIDE_KEY)){
-    openInstallGuide(true);
-  }else{
-    runIntro();
   }
+  if(canShowInstallGuide&&!store.get(INSTALL_GUIDE_KEY))openInstallGuide(true);
+  else if(!S)runIntro();
   requestAnimationFrame(frameLoop);
 }
 boot();
