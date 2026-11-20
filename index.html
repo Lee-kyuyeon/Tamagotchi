@@ -365,8 +365,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
         <b>LINK</b>: 연타와 응원으로 게이지가 차면 B로 <b>공명 진화</b>나 필살기. 배틀이 시작되면 화면이 컬러로 바뀌어.<br>
         <b>불</b>: WAKE로 깨우기, SLEEP으로 재우기(낮엔 낮잠). 잘 땐 배고픔·근력이 줄지 않고 진화 시간도 멈춰. 체력이 회복돼.<br>
         <b>치료</b>: 해골 마크가 사라질 때까지. 다친 채 오래 두면 데이터가 흩어져 버려.<br>
-        <b>진화</b>: 꼬마기까지 케어 실수 0~2회 / 3회 이상으로 전사기가 갈리고, 전사기의 훈련량과 실수로 기사기 5갈래. 영웅기는 15전 12승, 전설기는 실수 2회 이하에서 배틀 중 공명. 진화표는 메뉴에서.<br>
-        <b>특수 알</b>: 배틀 50승이면 폭풍 알, 12종을 만나면 별 알. <b>합체</b>: 전설기끼리 태그 배틀로 함께 이기면.<br><br>
+        <b>진화</b>: 꼬마기까지 케어 실수 0~2회 / 3회 이상으로 전사기가 갈리고, 전사기의 훈련량과 실수로 기사기 5갈래. 영웅기는 15전 12승, 전설기는 이 단계 케어 실수 2회 이하에서 진화. 진화표는 메뉴에서.<br>
+        <b>특수 알</b>: NPC 배틀 50승이면 폭풍 알, 100승이면 월식 알. 파트너 5종을 획득하면 별 알, 25종을 획득하면 혜성 알. <b>합체</b>: 전설기끼리 태그 배틀로 함께 이기면.<br><br>
         <b>화면을 길게 누르면</b> 파트너가 밖으로 나와. 문질러 쓰다듬어 줘. 배틀 중엔 폰을 흔들어도 응원이 돼(브라우저에서 직접 열었을 때).
       </p>
     </div>
@@ -475,7 +475,7 @@ function composeSprite(sp){
   const big=Ht>=22,tiny=sp.body==='tiny';
   // proportions
   const topZ=(sp.ears&&sp.ears!=='none')?Math.round(Ht*(sp.ears==='bunny'||sp.ears==='antenna'||sp.ears==='horns2'?.2:.14)):1;
-  let hx=Wd*(sp.hx||(sp.body==='tall'||sp.body==='knight'?.3:sp.body==='blob'?.44:.38)),hy=Ht*(sp.hy||(sp.body==='blob'?.4:sp.body==='tall'||sp.body==='knight'?.2:.25));
+  let hx=Wd*(sp.hx||(sp.body==='tall'||sp.body==='knight'?.34:sp.body==='blob'?.44:.40)),hy=Ht*(sp.hy||(sp.body==='blob'?.4:sp.body==='tall'||sp.body==='knight'?.22:.27));
   if(tiny){hx=Wd*.3;hy=Ht*.19}
   let hcy=topZ+hy+(tiny?Ht*.25:0);if(sp.body==='blob')hcy=Ht-1.5-hy;
   const by0=hcy+hy*.55,feet=!['blob','ghost','serpent','tree','snow'].includes(sp.body);
@@ -527,14 +527,17 @@ function composeSprite(sp){
   // ---- face
   const S2=(x,y,v)=>{x=Math.floor(x);y=Math.floor(y);if(y<0||y>=Ht)return;if(x>=0&&x<Wd)out[y][x]=v;const m=Wd-1-x;if(m>=0&&m<Wd)out[y][m]=v};
   const small=Wd<=16;const ey=Math.round(hcy-(small?1:hy*.05)),ex=Math.round(C-Math.max(2,hx*.45));
-  const eye=sp.eyes||'round';
+  const eye=sp.eyes==='sharp'?'big':sp.eyes||'round';
   if(eye==='mask'){for(let x=Math.round(C-hx*.78);x<C;x++)for(let y=ey-1;y<ey+2;y++)S2(x,y,4);S2(ex,ey,5);S2(ex+1,ey,5)}
   else if(eye==='sleepy'){S2(ex-1,ey+1,1);S2(ex,ey+1,1);S2(ex+1,ey+1,1);S2(ex,ey+2,4)}
   else if(eye==='dot'){S2(ex,ey,4);S2(ex,ey+1,4);S2(ex+1,ey,4);S2(ex+1,ey+1,4)}
   else{const ew=small?2:3,eh=small?2:(eye==='big'?4:3);for(let y=0;y<eh;y++)for(let x=0;x<ew;x++)S2(ex-(ew>2?1:0)+x,ey-1+y,4);S2(ex-(ew>2?1:0),ey-1,5);
-    if(eye==='sharp'){S2(ex-1,ey-2,1);S2(ex,ey-2,1);S2(ex+1,ey-1,1);S2(ex+2,ey-1,1)}}
+    if(sp.eyes==='sharp')S2(ex-1,ey-2,1);}
   const my=ey+(eye==='big'?3:eye==='mask'?2:small?2:3);
-  if(!sp.noblush&&eye!=='mask'&&eye!=='sleepy')S2(ex-(small?1:2),my-1,6);
+  if(!sp.noblush&&eye!=='mask'&&eye!=='sleepy'){
+    S2(ex-(small?1:2),my-1,6);
+    if(!small)S2(ex-1,my-1,6);
+  }
   const mo=sp.mouth||'smile',cl=Math.ceil(C)-1;
   if(mo==='smile'){S2(cl,my,7)}
   if(mo==='open'){S2(cl,my,7);S2(cl,my+1,7)}
@@ -549,6 +552,8 @@ function genEgg(pat){
   if(pat==='wave')for(const by of [5,10])for(let x=0;x<Wd;x++){P(x,by+((x>>1)%2));P(x,by+1+((x>>1)%2))}
   if(pat==='leaf')[[4,4],[9,6],[5,9],[10,11],[3,12],[7,13]].forEach(([x,y])=>{P(x,y);P(x+1,y);P(x,y+1)});
   if(pat==='bolt')[[8,3],[7,4],[6,5],[5,6],[6,7],[7,7],[8,8],[7,9],[6,10],[5,11],[6,6],[7,8]].forEach(([x,y])=>P(x,y));
+  if(pat==='eclipse')for(let y=4;y<12;y++)for(let x=4;x<10;x++)if((x-6)**2+(y-8)**2<=13&&(x-8)**2+(y-7)**2>8)P(x,y);
+  if(pat==='comet')for(let y=4;y<13;y++)for(let x=3;x<11;x++)if((x-8)**2+(y-6)**2<=5||x+y===14||(x+y===15&&x<=7))P(x,y);
   if(pat==='star'){[[7,5],[6,6],[7,6],[8,6],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[5,8],[6,8],[7,8],[8,8],[9,8],[6,9],[7,9],[8,9],[5,10],[6,10],[8,10],[9,10]].forEach(([x,y])=>P(x,y))}
   const out=g.map(r=>Uint8Array.from(r));
   for(let y=0;y<Ht;y++)for(let x=0;x<Wd;x++)if(!g[y][x]&&[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>(g[y+b]||[])[x+a]))out[y][x]=1;
@@ -610,7 +615,7 @@ const GEN={
  stormraptor:['스톰랩터',4,'z',{sz:'l',body:'chibi',ears:'crest',eyes:'sharp',mouth:'fang',acc:['wings','spikes']},['#9a7bff','#1e0e4a','#ffe04a'],'bolt','라이트닝 클로',90],
  tempest:['템페스트',5,'z',{sz:'xl',body:'knight',ears:'horns2',eyes:'sharp',mouth:'fang',acc:['wings','armor']},['#7a5aff','#120a3a','#fff04a'],'bolt','템페스트 레이',155],
  vortexlord:['볼텍스로드',6,'z',{sz:'xxl',body:'knight',ears:'crown',eyes:'mask',mouth:'none',acc:['wings','cape','mane']},['#ffe04a','#2a0a5a','#9a7bff'],'bolt','볼텍스 엔드',210],
- // special X: 별 알 (12종 수집)
+ // special X: 별 알 (5종 획득)
  eggx:['별 알',0,'x',{egg:'star'},['#eef4ff','#2a3aa8','#ffd23d']],
  starbean:['별콩',1,'x',{sz:'xs',body:'blob',ears:'horn',eyes:'dot',mouth:'smile'},['#a8c8ff','#2a3a8a','#ffffff'],'bolt','별빛',0],
  startail:['별꼬리',2,'x',{sz:'s',body:'chibi',ears:'horn',eyes:'round',mouth:'smile'},['#8ab0ff','#1a2a7a','#ffe04a'],'bolt','스타 톡',0],
@@ -618,6 +623,50 @@ const GEN={
  coredrago:['코어드라고',4,'x',{sz:'l',body:'quad',ears:'horns2',eyes:'sharp',mouth:'fang',acc:['wings','armor']},['#4a7aff','#0a124a','#ffd23d'],'fire','코어 캐논',80],
  wingdrago:['윙드라고',5,'x',{sz:'xl',body:'knight',ears:'horns2',eyes:'sharp',mouth:'fang',acc:['wings','spikes']},['#3a6aff','#060c3a','#9fe8ff'],'fire','윙 스트라이크',143],
  galaxydra:['갤럭시드라',6,'x',{sz:'xxl',body:'knight',ears:'crown',eyes:'sharp',mouth:'fang',acc:['wings','mane','armor']},['#2a4ad8','#020630','#ffd23d'],'fire','갤럭시 노바',199],
+ // 꽃잎·수정 계열과 특수 알
+ v4egg:["꽃잎 알", 0, "v4", {"egg": "leaf"}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 0],
+ v4form0:["꽃콩", 1, "v4", {"sz": "xs", "body": "blob", "ears": "round", "eyes": "big", "mouth": "smile", "acc": []}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 0],
+ v4form1:["꽃망울", 2, "v4", {"sz": "s", "body": "blob", "ears": "leaf", "eyes": "big", "mouth": "smile", "acc": []}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 0],
+ v4form2:["봉봉새", 3, "v4", {"sz": "m", "body": "chibi", "ears": "crest", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 34],
+ v4form3:["토리잎", 3, "v4", {"sz": "m", "body": "quad", "ears": "leaf", "eyes": "big", "mouth": "smile", "acc": []}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 34],
+ v4form4:["꽃뿔", 4, "v4", {"sz": "l", "body": "quad", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["armor"]}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 75],
+ v4form5:["잎방패", 4, "v4", {"sz": "l", "body": "knight", "ears": "helmet", "eyes": "big", "mouth": "smile", "acc": ["shell"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 65],
+ v4form6:["꽃사슴", 4, "v4", {"sz": "l", "body": "quad", "ears": "horns2", "eyes": "big", "mouth": "smile", "acc": ["mane"]}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 70],
+ v4form7:["꽃게기사", 4, "v4", {"sz": "l", "body": "chibi", "ears": "antenna", "eyes": "big", "mouth": "smile", "acc": ["fists"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 60],
+ v4form8:["이끼덩이", 4, "v4", {"sz": "l", "body": "blob", "ears": "none", "eyes": "big", "mouth": "smile", "acc": []}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 40],
+ v4form9:["수련치", 4, "v4", {"sz": "l", "body": "chibi", "ears": "fin", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 55],
+ v4form10:["풀잠이", 4, "v4", {"sz": "l", "body": "serpent", "ears": "bunny", "eyes": "big", "mouth": "smile", "acc": []}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 50],
+ v4form11:["달꽃수호자", 5, "v4", {"sz": "xl", "body": "knight", "ears": "halo", "eyes": "big", "mouth": "smile", "acc": ["armor", "cape"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 126],
+ v4form12:["꽃구름", 5, "v4", {"sz": "xl", "body": "ghost", "ears": "leaf", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 118],
+ v4form13:["숲항아리", 5, "v4", {"sz": "xl", "body": "tiny", "ears": "helmet", "eyes": "big", "mouth": "smile", "acc": ["belly"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 107],
+ v4form14:["봄빛왕", 6, "v4", {"sz": "xxl", "body": "knight", "ears": "crown", "eyes": "big", "mouth": "smile", "acc": ["wings", "armor"]}, ["#ffc5dc", "#773353", "#8bd184"], "bubble", "", 188],
+ v4form15:["버드나무왕", 6, "v4", {"sz": "xxl", "body": "tree", "ears": "halo", "eyes": "big", "mouth": "smile", "acc": ["leaves", "fists"]}, ["#8bd184", "#773353", "#ffc5dc"], "bubble", "", 176],
+ v5egg:["수정 알", 0, "v5", {"egg": "wave"}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 0],
+ v5form0:["돌콩", 1, "v5", {"sz": "xs", "body": "blob", "ears": "round", "eyes": "big", "mouth": "smile", "acc": []}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 0],
+ v5form1:["수정방울", 2, "v5", {"sz": "s", "body": "chibi", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["armor"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 0],
+ v5form2:["루루석", 3, "v5", {"sz": "m", "body": "chibi", "ears": "crest", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 34],
+ v5form3:["몽글돌", 3, "v5", {"sz": "m", "body": "chibi", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["armor"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 34],
+ v5form4:["자수정뿔", 4, "v5", {"sz": "l", "body": "quad", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["armor"]}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 75],
+ v5form5:["수정방패", 4, "v5", {"sz": "l", "body": "knight", "ears": "helmet", "eyes": "big", "mouth": "smile", "acc": ["shell"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 65],
+ v5form6:["광석올빼미", 4, "v5", {"sz": "l", "body": "quad", "ears": "horns2", "eyes": "big", "mouth": "smile", "acc": ["mane"]}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 70],
+ v5form7:["보석두더지", 4, "v5", {"sz": "l", "body": "chibi", "ears": "antenna", "eyes": "big", "mouth": "smile", "acc": ["fists"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 60],
+ v5form8:["돌솜이", 4, "v5", {"sz": "l", "body": "blob", "ears": "none", "eyes": "big", "mouth": "smile", "acc": []}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 40],
+ v5form9:["은빛날개", 4, "v5", {"sz": "l", "body": "chibi", "ears": "fin", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 55],
+ v5form10:["조약꼬리", 4, "v5", {"sz": "l", "body": "serpent", "ears": "bunny", "eyes": "big", "mouth": "smile", "acc": []}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 50],
+ v5form11:["프리즘기사", 5, "v5", {"sz": "xl", "body": "knight", "ears": "crest", "eyes": "big", "mouth": "smile", "acc": ["armor", "fwings"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 126],
+ v5form12:["수정등불", 5, "v5", {"sz": "xl", "body": "chibi", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["armor"]}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 118],
+ v5form13:["월석인형", 5, "v5", {"sz": "xl", "body": "tiny", "ears": "helmet", "eyes": "big", "mouth": "smile", "acc": ["belly"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 107],
+ v5form14:["오로라왕", 6, "v5", {"sz": "xxl", "body": "knight", "ears": "crown", "eyes": "big", "mouth": "smile", "acc": ["wings", "armor"]}, ["#d0baff", "#493479", "#7be1e2"], "bolt", "", 188],
+ v5form15:["별광왕", 6, "v5", {"sz": "xxl", "body": "knight", "ears": "crest", "eyes": "big", "mouth": "smile", "acc": ["armor", "fwings"]}, ["#7be1e2", "#493479", "#d0baff"], "bolt", "", 176],
+ eggh:["월식 알", 0, "h", {"egg": "eclipse"}, ["#b9a6eb", "#3d285d", "#fadf9c"], "bolt", "", 0],
+ moonpip:["달콩이", 3, "h", {"sz": "m", "body": "chibi", "ears": "bunny", "eyes": "big", "mouth": "smile", "acc": ["fwings"]}, ["#b9a6eb", "#3d285d", "#fadf9c"], "bolt", "", 34],
+ moonshield:["달방패", 4, "h", {"sz": "l", "body": "quad", "ears": "helmet", "eyes": "big", "mouth": "smile", "acc": ["shell"]}, ["#b9a6eb", "#3d285d", "#fadf9c"], "bolt", "", 90],
+ lunarwing:["루나윙", 5, "h", {"sz": "xl", "body": "chibi", "ears": "halo", "eyes": "big", "mouth": "smile", "acc": ["fwings", "cape"]}, ["#b9a6eb", "#3d285d", "#fadf9c"], "bolt", "", 155],
+ eclipse:["이클립스", 6, "h", {"sz": "xxl", "body": "knight", "ears": "crown", "eyes": "big", "mouth": "smile", "acc": ["cape", "armor"]}, ["#b9a6eb", "#3d285d", "#fadf9c"], "bolt", "", 210],
+ eggy:["혜성 알", 0, "y", {"egg": "comet"}, ["#ffad8a", "#72354d", "#ffdf86"], "bolt", "", 0],
+ cometcore:["혜성코어", 4, "y", {"sz": "l", "body": "quad", "ears": "horn", "eyes": "big", "mouth": "smile", "acc": ["shell", "armor"]}, ["#ffad8a", "#72354d", "#ffdf86"], "bolt", "", 80],
+ cometwing:["혜성날개", 5, "y", {"sz": "xl", "body": "chibi", "ears": "fin", "eyes": "big", "mouth": "smile", "acc": ["wings", "armor"]}, ["#ffad8a", "#72354d", "#ffdf86"], "bolt", "", 143],
+ cometking:["혜성왕", 6, "y", {"sz": "xxl", "body": "knight", "ears": "crest", "eyes": "big", "mouth": "smile", "acc": ["wings", "spikes"]}, ["#ffad8a", "#72354d", "#ffdf86"], "bolt", "", 199],
  // fusion
  apollion:['아폴리온',7,'fx',{sz:'xxl',body:'knight',ears:'halo',eyes:'sharp',mouth:'none',acc:['wings','cape','armor','mane']},['#ffe27a','#8a1a00','#ff4a2a'],'fire','아폴론 레퀴엠',240],
  leviathus:['리바이어스',7,'fx',{sz:'xxl',body:'knight',ears:'crown',eyes:'mask',mouth:'none',acc:['wings','cape','armor','spikes']},['#6ae8ff','#021a4a','#ffffff'],'bubble','딥 블루 엔드',240],
@@ -628,6 +677,11 @@ const GEN={
 function trimRows(rows){let a=99,b=-1,c=99,d=-1;rows.forEach((r,y)=>r.forEach((v,x)=>{if(v){a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)}}));
   const w=b-a+1,h=d-c+1,D=new Uint8Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++)D[y*w+x]=rows[y+c][x+a];return{w,h,d:D}}
 for(const id in GEN){const sp=GEN[id][3];const g=sp.egg?genEgg(sp.egg):composeSprite(sp);SPR[id]=trimRows(g.rows.map(r=>Array.from(r)));SPR[id].f=makeFrames(SPR[id])}
+const starterSprites={"mochi": ["xs", "blob", "round", []], "kkori": ["s", "blob", "bunny", []], "pyro": ["m", "chibi", "crest", ["belly"]], "lupo": ["m", "quad", "cat", ["mane"]], "flayd": ["l", "chibi", "crest", ["fwings"]], "voltfang": ["l", "quad", "bunny", ["spikes"]], "infergon": ["xl", "chibi", "horns2", ["wings", "armor"]], "thundergar": ["xl", "quad", "cat", ["mane", "armor"]], "solarion": ["xxl", "chibi", "halo", ["wings", "mane"]], "astraion": ["xxl", "knight", "crown", ["fwings", "armor"]]};
+for(const [id,[sz,body,ears,acc]] of Object.entries(starterSprites)){
+  SPR[id]=trimRows(composeSprite({sz,body,ears,acc,eyes:'big',mouth:'smile'}).rows);
+  SPR[id].f=makeFrames(SPR[id]);
+}
 const frame=(id,kind)=>(kind&&SPR[id].f&&SPR[id].f[kind])||SPR[id];
 
 const FONT={A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',E:'111100110100111',F:'111100110100100',G:'011100101101011',H:'101101111101101',I:'111010010010111',J:'001001001101010',K:'101101110101101',L:'100100100100111',M:'101111111101101',N:'110101101101101',O:'010101101101010',P:'110101110100100',Q:'010101101110011',R:'110101110101101',S:'011100010001110',T:'111010010010010',U:'101101101101111',V:'101101101101010',W:'101101111111101',X:'101101010101101',Y:'101101010010010',Z:'111001010100111',
@@ -663,22 +717,28 @@ const ITEMPAL={poop:['#c98a4b','#4d2a12'],skull:['#eceaf5','#2a2a3a'],meat:['#e0
 const VERS={
   v1:{name:'불꽃 알',egg:'egg',b1:'mochi',b2:'kkori',rA:'pyro',rB:'lupo',champA:['flayd','nocturn','gordon','flarering','mulong'],champB:['voltfang','nocturn','aqualin','flarering','mulong'],
       ult:{flayd:'infergon',voltfang:'thundergar',nocturn:'tinyguard',gordon:'tinyguard',aqualin:'tinyguard',flarering:'tinyguard',mulong:'pogom'},mega:{infergon:'solarion',thundergar:'astraion',tinyguard:'titanfist'},fusion:'apollion'},
-  v2:{name:'물결 알',egg:'egg2',b1:'pong',b2:'droplet',rA:'sealu',rB:'kani',champA:['penguard','frosty','sharkfin','coralia','jelly'],champB:['bluewing','frosty','whalong','coralia','jelly'],
+  v2:{name:'물결 알',egg:'egg2',b1:'pong',b2:'droplet',rA:'sealu',rB:'kani',champA:['penguard','coralia','sharkfin','frosty','jelly'],champB:['bluewing','coralia','whalong','frosty','jelly'],
       ult:{penguard:'glacion',bluewing:'glacion',frosty:'reefking',sharkfin:'reefking',whalong:'reefking',coralia:'reefking',jelly:'aquaqueen'},mega:{glacion:'oceanion',reefking:'trident'},fusion:'leviathus'},
-  v3:{name:'새순 알',egg:'egg3',b1:'sprout',b2:'leafy',rA:'doto',rB:'kkomul',champA:['beetleknight','shroomy','woodwolf','flowery','mudling'],champB:['mothwing','shroomy','thornvine','flowery','mudling'],
+  v3:{name:'새순 알',egg:'egg3',b1:'sprout',b2:'leafy',rA:'doto',rB:'kkomul',champA:['beetleknight','flowery','woodwolf','shroomy','mudling'],champB:['mothwing','flowery','thornvine','shroomy','mudling'],
       ult:{beetleknight:'heraklon',mothwing:'heraklon',shroomy:'elderoak',woodwolf:'elderoak',thornvine:'elderoak',flowery:'elderoak',mudling:'mushking'},mega:{heraklon:'gaialord',elderoak:'worldtree'},fusion:'sylvanus'},
-  z:{name:'폭풍 알',special:true,egg:'eggz',line:['sparky','volty','zephyr','stormraptor','tempest','vortexlord'],fusion:'zenith'},
-  x:{name:'별 알',special:true,egg:'eggx',line:['starbean','startail','draco','coredrago','wingdrago','galaxydra'],fusion:'zenith'},
+  v4:{"name": "꽃잎 알", "egg": "v4egg", "b1": "v4form0", "b2": "v4form1", "rA": "v4form2", "rB": "v4form3", "champA": ["v4form4", "v4form5", "v4form6", "v4form7", "v4form8"], "champB": ["v4form9", "v4form5", "v4form10", "v4form7", "v4form8"], "ult": {"v4form4": "v4form11", "v4form5": "v4form12", "v4form6": "v4form12", "v4form7": "v4form12", "v4form8": "v4form13", "v4form9": "v4form11", "v4form10": "v4form12"}, "mega": {"v4form11": "v4form14", "v4form12": "v4form15"}, "fusion": "zenith"},
+  v5:{"name": "수정 알", "egg": "v5egg", "b1": "v5form0", "b2": "v5form1", "rA": "v5form2", "rB": "v5form3", "champA": ["v5form4", "v5form5", "v5form6", "v5form7", "v5form8"], "champB": ["v5form9", "v5form5", "v5form10", "v5form7", "v5form8"], "ult": {"v5form4": "v5form11", "v5form5": "v5form12", "v5form6": "v5form12", "v5form7": "v5form12", "v5form8": "v5form13", "v5form9": "v5form11", "v5form10": "v5form12"}, "mega": {"v5form11": "v5form14", "v5form12": "v5form15"}, "fusion": "zenith"},
+  z:{unlock:{wins:50},name:'폭풍 알',special:true,egg:'eggz',line:['sparky','volty','zephyr','stormraptor','tempest','vortexlord'],fusion:'zenith'},
+  x:{unlock:{species:5},name:'별 알',special:true,egg:'eggx',line:['starbean','startail','draco','coredrago','wingdrago','galaxydra'],fusion:'zenith'},
 };
-const VER_ORDER=['v1','v2','v3','z','x'];
+VERS.h={name:'월식 알',special:true,egg:'eggh',unlock:{wins:100},
+  line:['sparky','volty','moonpip','moonshield','lunarwing','eclipse'],fusion:'zenith'};
+VERS.y={name:'혜성 알',special:true,egg:'eggy',unlock:{species:25},
+  line:['starbean','startail','draco','cometcore','cometwing','cometking'],fusion:'zenith'};
+const VER_ORDER=Object.keys(VERS);
 const ENEMIES=['glitch','noisebug','crackbeast','voidlord'];
 /* the battle ladder: every wild and tamed monster that can fight, weakest first */
 const LADDER=Object.keys(FORMS).filter(k=>(FORMS[k].power||0)>0&&FORMS[k].stage<7).sort((a,b)=>FORMS[a].power-FORMS[b].power);
-const DEX_ORDER=VER_ORDER.flatMap(v=>{const V=VERS[v];return V.special?[V.egg,...V.line]:[V.egg,V.b1,V.b2,V.rA,V.rB,...new Set([...V.champA,...V.champB]),...new Set(Object.values(V.ult)),...new Set(Object.values(V.mega))]}).concat(['apollion','leviathus','sylvanus','zenith'],ENEMIES);
+const DEX_ORDER=[...new Set(VER_ORDER.flatMap(v=>{const V=VERS[v];return V.special?[V.egg,...V.line]:[V.egg,V.b1,V.b2,V.rA,V.rB,...new Set([...V.champA,...V.champB]),...new Set(Object.values(V.ult)),...new Set(Object.values(V.mega))]}).concat(['apollion','leviathus','sylvanus','zenith'],ENEMIES))];
 /* time per stage (awake time only) and requirements, for the two time modes */
 const TT={orig:[60e3,600e3,6*3600e3,24*3600e3,36*3600e3,48*3600e3],fast:[25e3,120e3,360e3,900e3,1500e3,1800e3]};
-const REQ={orig:{b:15,w:12,tr:16,zw:50,xs:12,tag:10,wake:15*60e3,nap:3*3600e3,inj:6*3600e3,vit:30*60e3,sleepVit:6*60e3},
-           fast:{b:6,w:4,tr:6,zw:30,xs:12,tag:3,wake:5*60e3,nap:3*60e3,inj:20*60e3,vit:60e3,sleepVit:6e3}};
+const REQ={orig:{b:15,w:12,tr:16,tag:10,wake:15*60e3,nap:3*3600e3,inj:6*3600e3,vit:30*60e3,sleepVit:6*60e3},
+           fast:{b:15,w:12,tr:6,tag:3,wake:5*60e3,nap:3*60e3,inj:20*60e3,vit:60e3,sleepVit:6e3}};
 const TM=()=>SET.timeMode==='fast'?'fast':'orig';
 const R=()=>REQ[TM()];
 const stageTime=st=>TT[TM()][Math.min(st,5)];
@@ -813,22 +873,35 @@ let S=null;
 function partnerFresh(){return{hunger:3,strength:2,weight:5,effort:0,vit:10,trainCnt:0,protein:0,od:0,injury:0,injT:0,poop:0,lightsOn:true,sleeping:false,wakeUntil:0,napUntil:0,
   tH:0,tS:0,tP:0,tSick:0,vitT:0,callSince:0,stAwake:0,sm:0,str:0,sb:0,sw:0,mBaby:0,pw:0,pl:0,tw:0,tl:0,tagWith:{},age:0,bornAt:Date.now(),ladder:0}}
 function newState(tamer,color){const now=Date.now();return Object.assign({v:1,tamer,color,form:'egg',ver:'v1',gt:0,lastReal:now,
-  mistakes:0,trains:0,talks:0,wins:0,losses:0,tagWins:0,bond:20,encAt:now+120e3,episodes:[],seen:['egg'],album:[],flags:{},lastTalk:-1e9},partnerFresh())}
+  mistakes:0,trains:0,talks:0,wins:0,losses:0,tagWins:0,bond:20,encAt:now+120e3,episodes:[],seen:['egg'],raised:[],album:[],flags:{},lastTalk:-1e9},partnerFresh())}
 function migrate(s){const base=newState(s.tamer,s.color);const o=Object.assign(base,s);
   if(!o.ver)o.ver=(o.form&&FORMS[o.form]&&FORMS[o.form].ver)||'v1';if(o.sick&&!o.injury)o.injury=1;delete o.sick;
   if(o.stageStart!==undefined&&!s.stAwake){o.stAwake=Math.max(0,(o.gt||0)-(o.stageStart||0))}delete o.stageStart;
-  if(o.form&&!FORMS[o.form])o.form='egg';return o}
+  if(o.form&&!FORMS[o.form])o.form='egg';
+  if(!Array.isArray(s.raised)){
+    // Older saves mixed opponents and raised forms in seen. Recover confirmed partners.
+    o.raised=[...new Set([o.form,...o.album.map(entry=>entry.id)].filter(isCollectible))];
+  }
+  return o}
 function save(){if(!S)return;S.lastReal=Date.now();store.set(SAVE,S)}
 function addSeen(f){if(f&&!S.seen.includes(f))S.seen.push(f)}
 function bondAdd(n){S.bond=clamp(S.bond+n,0,100)}
-function unlockedEggs(){const u=['v1','v2','v3'];if(S.wins+(S.tagWins||0)>=R().zw)u.push('z');if(S.seen.filter(k=>FORMS[k]&&!FORMS[k].enemy&&FORMS[k].stage>0).length>=R().xs)u.push('x');return u}
+function isCollectible(id){const form=FORMS[id];return Boolean(form&&!form.enemy&&form.stage>0)}
+function npcWins(){return S.wins+S.tagWins}
+function unlockedEggs(){
+  return VER_ORDER.filter(id=>{
+    const unlock=VERS[id].unlock;
+    if(!unlock)return true;
+    return unlock.wins!==undefined?npcWins()>=unlock.wins:S.raised.length>=unlock.species;
+  });
+}
 
 /* ================= ui helpers ================= */
 const msgEl=$('#msg');let msgTimer=0;
 function say(t,ms=3500){msgEl.textContent=t;clearTimeout(msgTimer);if(ms)msgTimer=setTimeout(()=>{msgEl.textContent=idleMsg()},ms)}
 function idleMsg(){
   if(!S)return 'LINK READY';
-  if(S.form==='egg')return '알이 따뜻하게 빛나고 있다';
+  if(stageOf(S.form)===0)return '알이 따뜻하게 빛나고 있다';
   if(S.sleeping)return S.lightsOn?'눈부셔서 잠을 못 자…':'쿨… 쿨…';
   const r=callReasons();if(r.length)return '!! '+r[0];
   return `${nm(S.form)} · 링크 ${S.bond}`;
@@ -952,7 +1025,7 @@ function evoState(){
   const t=nextForm();if(!t)return{ready:false};
   if(S.stAwake<stageTime(st))return{ready:false,t};
   if(st===4&&(S.sb<R().b||S.sw<R().w))return{ready:false,t,need:'battle'};
-  if(st===5)return S.sm<=2?{ready:false,t,viaBattle:true}:{ready:false,t,need:'care'};
+  if(st===5&&S.sm>2)return{ready:false,t,need:'care'};
   return{ready:true,t};
 }
 function fmtLeft(ms){if(ms<=0)return '준비 완료';const m=Math.ceil(ms/60000);return m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`:`${m}분`}
@@ -966,15 +1039,15 @@ function hintText(){
   if(st===2)return V.special?`전사기까지 ${fmtLeft(left)}`:`전사기까지 ${fmtLeft(left)} · 지금까지 케어 실수 ${S.mBaby}회 → ${S.mBaby<=2?'0~2회 루트':'3회 이상 루트'}`;
   if(st===3)return V.special?`기사기까지 ${fmtLeft(left)}`:`기사기까지 ${fmtLeft(left)} · 이 단계 훈련 ${S.str}/${r.tr} · 실수 ${S.sm}회 (훈련량과 실수로 5갈래)`;
   if(st===4)return e.t?`영웅기까지 ${fmtLeft(left)} · 이 단계 배틀 ${Math.min(S.sb,r.b)}/${r.b}전 · 승리 ${Math.min(S.sw,r.w)}/${r.w}`:'이 모습은 더 진화하지 않아.';
-  if(st===5)return e.t?`전설기까지 ${fmtLeft(left)} · 이 단계 실수 ${S.sm}회 (2회 이하) → 조건이 되면 배틀 중 LINK MAX에서 B로 최종 공명!`:'진화의 끝이야. 다른 길이 있을지도.';
+  if(st===5)return e.t?`전설기까지 ${fmtLeft(left)} · 이 단계 실수 ${S.sm}회 (2회 이하)`:'진화의 끝이야. 다른 길이 있을지도.';
   if(st===6){const c=fusionCandidates();if(!c.length)return `전설기 도달! 앨범에 다른 전설기 동료가 있으면, 태그 배틀 ${r.tag}승으로 합체할 수 있어.`;const best=Math.max(...c.map(o=>S.tagWith[o.i]||0));return `합체 조건: 앨범 속 전설기 동료와 태그 배틀 ${r.tag}승 (지금 ${best}승) → 메뉴 › 앨범에서 합체`}
   return '두 전설이 하나가 된 모습. 이 링커의 정점이야.';
 }
 function checkUnlocks(){
-  const u=unlockedEggs();for(const v of ['z','x'])if(u.includes(v)&&!S.flags['egg_'+v]){S.flags['egg_'+v]=true;S.flags.newEgg=true;
+  const u=unlockedEggs();for(const v of u)if(VERS[v].special&&!S.flags['egg_'+v]){S.flags['egg_'+v]=true;S.flags.newEgg=true;
     cine(async()=>{await showEpisode(`특별한 알의 신호 — ${VERS[v].name}`,'A와 B를 동시에 눌러 알을 골라 봐')})}
 }
-function applyForm(to){S.form=to;S.stAwake=0;S.sm=0;S.str=0;S.sb=0;S.sw=0;S.effort=0;S.trainCnt=0;S.weight=FORMS[to].wt;addSeen(to);
+function applyForm(to){S.form=to;S.stAwake=0;S.sm=0;S.str=0;S.sb=0;S.sw=0;S.effort=0;S.trainCnt=0;S.weight=FORMS[to].wt;addSeen(to);if(isCollectible(to)&&!S.raised.includes(to))S.raised.push(to);
   if(stageOf(to)===1){S.hunger=2;S.strength=2;S.mBaby=0}P.x=Math.round((W-SPR[to].w)/2);checkUnlocks()}
 
 /* ================= dialogue ================= */
@@ -1155,11 +1228,10 @@ function bgo(ph){const B=mode.B;B.phase=ph;B.t=0;B.applied=false;
 function addGauge(n){const B=mode.B;const was=B.gauge;B.gauge=clamp(B.gauge+n,0,100);paintLink(B.gauge);
   if(was<100&&B.gauge>=100){SFX.max();glow(true);$('#lamp2').classList.add('on');speak(pick(['{T}의 마음이… 느껴져!','지금이야, {T}! 힘이 넘쳐흘러!','링크가… 공명하고 있어!']));say('LINK MAX! B를 눌러!')}
 }
-function megaOK(){const e=evoState();return e.viaBattle}
 function canResonate(B){
   if(B.act!==0||B.resonated||stageOf(B.cur)<3||stageOf(B.cur)>=6||S.bond<30)return false;
   const nx=nextForm(B.cur);if(!nx)return false;
-  if(stageOf(B.cur)===5)return megaOK();
+  if(stageOf(B.cur)===5)return S.sm<=2;
   return true;
 }
 function battleInput(btn){
@@ -1189,18 +1261,16 @@ function doSpecial(B){
   }).then(()=>{bgo('pimpact')});
 }
 function doResonance(B){
-  const from=B.cur,to=nextForm(from);const permanent=stageOf(from)===5;
+  const from=B.cur,to=nextForm(from);
   zap();
   cine(async()=>{
     speak('{T}!! 네 마음… 받았어!!');await sleep(600);
     await breakout(from,{dir:'out',frame:'angry'});
-    await playEvolution(from,to,{kind:permanent?'final':'resonance'});
+    await playEvolution(from,to,{kind:'resonance'});
     addSeen(to);
-    if(permanent){applyForm(to);save()}
     await breakout(to,{dir:'in',after:true,frame:'angry'});
-    if(permanent)await showEpisode(`기적의 빛, 전설의 ${nm(to)}`);
     if(!S.flags.resonance){S.flags.resonance=true;await showEpisode('공명하는 두 마음')}
-  }).then(()=>{B.cur=to;B.team[0]=to;B.resonated=true;B.bonus=1;B.php=B.pmax;if(permanent)B.base=to;bgo(B.type==='tag'?'meter':'ready');speak(permanent?'이게 우리의 전설이야, {T}!':`가자, {T}! ${nm(to)}의 힘을 보여줄게!`)});
+  }).then(()=>{B.cur=to;B.team[0]=to;B.resonated=true;B.bonus=1;B.php=B.pmax;bgo(B.type==='tag'?'meter':'ready');speak(`가자, {T}! ${nm(to)}의 힘을 보여줄게!`)});
 }
 function endBattle(res){
   const B=mode.B;$('#linkbar').hidden=true;$('#motionBtn').hidden=true;glow(false);$('#lamp').classList.remove('on');$('#lamp2').classList.remove('on');
@@ -1209,7 +1279,7 @@ function endBattle(res){
   if(res==='win'){if(B.type==='tag'){S.tagWins++;S.tw++;S.tagWith[B.mate]=(S.tagWith[B.mate]||0)+1}else{S.wins++;S.pw++}S.sw++;S.ladder++;bondAdd(3);
     S.weight=Math.max(FORMS[S.form].wt,S.weight-2);if(Math.random()<.5)S.hunger=Math.max(0,S.hunger-1)}
   else if(res==='lose'){if(B.type==='tag')S.tl++;else{S.losses++;S.pl++}bondAdd(1);if(Math.random()<.35){S.injury=Math.max(S.injury,1);say('패배하면서 다쳐 버렸다…')}}
-  save();checkUnlocks();
+  checkUnlocks();save();
   const after=()=>{
     const eps=[];const tot=S.wins+S.tagWins;
     if(res==='win'&&tot===1)eps.push('첫 승리, 우리는 파트너');
@@ -1999,8 +2069,8 @@ function renderChart(){
   const row=(label,time,items)=>{const d=document.createElement('div');d.className='crow';const b=document.createElement('b');b.textContent=label;if(time){const sm=document.createElement('small');sm.textContent=time;b.append(sm)}
     const cells=document.createElement('div');cells.className='cells';items.forEach(([id,cap])=>cells.append(cellEl(id,cap,!S.gone&&S.form===id)));d.append(b,cells);box.append(d)};
   if(V.special){
-    const note=document.createElement('p');note.className='note';note.textContent=v==='z'?`해금: 배틀 ${r.zw}승 (지금 ${S.wins+S.tagWins}승) · 갈래 없이 곧게 자라는 강한 알`:`해금: 몬스터 ${r.xs}종 만나기 (지금 ${S.seen.filter(k=>FORMS[k]&&!FORMS[k].enemy&&FORMS[k].stage>0).length}종) · 드래곤의 피를 이은 알`;box.append(note);
-    row('알','',[[V.egg]]);['새싹기','꼬마기','전사기','기사기','영웅기','전설기'].forEach((l,i)=>row(l,'+'+fm(tt[i]),[[V.line[i],i===3?`${r.b}전 ${r.w}승`:i===5?'실수 0~2 + 공명':'']]));
+    const note=document.createElement('p');note.className='note';note.textContent=V.unlock.wins!==undefined?`해금: NPC 배틀 ${V.unlock.wins}승 (지금 ${npcWins()}승)`:`해금: 파트너 ${V.unlock.species}종 획득 (지금 ${S.raised.length}종)`;box.append(note);
+    row('알','',[[V.egg]]);['새싹기','꼬마기','전사기','기사기','영웅기','전설기'].forEach((l,i)=>row(l,'+'+fm(tt[i]),[[V.line[i],i===4?`${r.b}전 ${r.w}승`:i===5?'실수 0~2회':'']]));
     row('합체','',[[V.fusion,'전설기 + 태그']]);return}
   row('알','',[[V.egg]]);row('새싹기','+'+fm(tt[0]),[[V.b1]]);row('꼬마기','+'+fm(tt[1]),[[V.b2]]);
   row('전사기','+'+fm(tt[2]),[[V.rA,'실수 0~2회'],[V.rB,'실수 3회+']]);
@@ -2008,7 +2078,7 @@ function renderChart(){
   const champs=[];V.champA.forEach((id,i)=>{const b=V.champB[i];if(b===id)champs.push([id,caps[i]]);else{champs.push([id,'A · '+caps[i]]);champs.push([b,'B · '+caps[i]])}});
   row('기사기','+'+fm(tt[3]),champs);
   row('영웅기','+'+fm(tt[4]),[...new Set(Object.values(V.ult))].map(id=>[id,`${r.b}전 ${r.w}승`]));
-  row('전설기','+'+fm(tt[5]),[...new Set(Object.values(V.mega))].map(id=>[id,'실수 0~2 + 공명']));
+  row('전설기','+'+fm(tt[5]),[...new Set(Object.values(V.mega))].map(id=>[id,'실수 0~2회']));
   row('합체','',[[V.fusion,'전설기 + 태그 '+r.tag+'승']]);
 }
 function renderAlbum(){
@@ -2054,8 +2124,8 @@ addEventListener('blur',()=>{held.A=held.B=held.C=false});
 $('#cut').addEventListener('pointerdown',()=>cineTap());
 (function(){const scr=$('#screen');let t=0,fired=false;
   scr.addEventListener('contextmenu',e=>e.preventDefault());
-  scr.addEventListener('pointerdown',e=>{fired=false;clearTimeout(t);t=setTimeout(()=>{fired=true;if(!S||busy()||mode.name!=='main'||S.form==='egg'||S.sleeping)return;ac();vib(30);petStart()},600)});
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>scr.addEventListener(ev,()=>{clearTimeout(t);if(ev==='pointerup'&&!fired){ac();if(S&&!busy()&&eggReady&&S.form==='egg')hatchStart()}}));
+  scr.addEventListener('pointerdown',e=>{fired=false;clearTimeout(t);t=setTimeout(()=>{fired=true;if(!S||busy()||mode.name!=='main'||stageOf(S.form)===0||S.sleeping)return;ac();vib(30);petStart()},600)});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>scr.addEventListener(ev,()=>{clearTimeout(t);if(ev==='pointerup'&&!fired){ac();if(S&&!busy()&&eggReady&&stageOf(S.form)===0)hatchStart()}}));
 })();
 $('#replayBtn').onclick=()=>{$('#sheet').hidden=true;runIntro(true)};
 $('#ep').addEventListener('pointerdown',()=>cineTap());
