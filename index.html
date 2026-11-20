@@ -1791,11 +1791,11 @@ const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
 function roomBuf(VWo,VHo){const w=180,h=Math.round(w*VHo/VWo);if(!ROOM.c||ROOM.w!==w||ROOM.h!==h){ROOM.c=document.createElement('canvas');ROOM.c.width=w;ROOM.c.height=h;ROOM.x=ROOM.c.getContext('2d',{willReadFrequently:true});ROOM.w=w;ROOM.h=h}return ROOM}
 function posterize(ctx,w,h,lv){const im=ctx.getImageData(0,0,w,h),d=im.data,st=255/(lv-1);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,t=(BAYER[(y&3)*4+(x&3)]/16-.47)*st;d[i]=Math.round(clamp(d[i]+t,0,255)/st)*st;d[i+1]=Math.round(clamp(d[i+1]+t,0,255)/st)*st;d[i+2]=Math.round(clamp(d[i+2]+t,0,255)/st)*st}ctx.putImageData(im,0,0)}
 function letterbox(c,VWo,VHo,a=1){const bh=Math.round(VHo*.12*a);c.fillStyle='#000';c.fillRect(0,0,VWo,bh);c.fillRect(0,VHo-bh,VWo,bh)}
-function drawRoom(c,VWo,VHo,pal,el,zoom,tod){
+function drawRoom(c,VWo,VHo,pal,el,zoom,tod,o={}){
   const RB=roomBuf(VWo,VHo),x=RB.x,w=RB.w,h=RB.h;
   x.setTransform(1,0,0,1,0,0);x.fillStyle='#000';x.fillRect(0,0,w,h);
   const s=Math.max(w/390,h/844),k=clamp((zoom-1)/1.8,0,1),fx_=195+(146-195)*k,fy=430+(383-430)*k;
-  x.save();x.translate(w/2,h/2);x.scale(s*zoom,s*zoom);x.translate(-fx_,-fy);
+  x.save();x.translate(w/2,h/2);x.scale(s*zoom,s*zoom);x.translate(-fx_+(o.dx||0),-fy+(o.dy||0));
   const fl=.85+.15*Math.sin(el/90)*Math.sin(el/37),now=new Date();
   // wall + wallpaper
   x.fillStyle=pal.wall;x.fillRect(-200,-200,790,1244);
@@ -1846,6 +1846,7 @@ function drawRoom(c,VWo,VHo,pal,el,zoom,tod){
   x.fillStyle='#1a1424';rr(x,290,468,80,46,6);x.fill();x.fillStyle='#2a1a2a';x.fillRect(296,474,68,34);
   x.font='bold 24px monospace';x.textAlign='center';x.fillStyle=Math.floor(el/500)%2?'#ff4a4a':'#ff6a5a';
   const hh=String(now.getHours()).padStart(2,'0'),mm=String(now.getMinutes()).padStart(2,'0');x.fillText(hh+(Math.floor(el/500)%2?':':' ')+mm,330,500);x.textAlign='left';
+  if(o.mid)o.mid(x);
   // the child, back turned, rim-lit by the screen
   const kid=(col,ox,oy)=>{x.fillStyle=col;x.beginPath();x.ellipse(132+ox,700+oy,50,54,0,0,Math.PI*2);x.fill();
     [[-34,-34,20],[-8,-50,22],[20,-46,20],[40,-26,16],[-46,-8,14],[4,-64,12],[30,-62,10]].forEach(([a,b,r])=>{x.beginPath();x.arc(132+ox+a,700+oy+b,r,0,Math.PI*2);x.fill()});
@@ -1857,8 +1858,9 @@ function drawRoom(c,VWo,VHo,pal,el,zoom,tod){
   c.imageSmoothingEnabled=false;c.drawImage(RB.c,0,0,VWo,VHo);
   // soft CRT bloom on top, at full resolution
   const sx=VWo/2+(138-fx_)*s*zoom*(VWo/w),sy=VHo/2+(380-fy)*s*zoom*(VWo/w);
-  c.save();c.globalCompositeOperation='lighter';const gl=c.createRadialGradient(sx,sy,10,sx,sy,VWo*.9*zoom);gl.addColorStop(0,`rgba(255,80,60,${.22*fl})`);gl.addColorStop(1,'rgba(255,40,30,0)');c.fillStyle=gl;c.fillRect(0,0,VWo,VHo);c.restore();
+  c.save();c.globalCompositeOperation='lighter';const gl=c.createRadialGradient(sx,sy,10,sx,sy,VWo*.9*zoom);gl.addColorStop(0,`rgba(255,80,${60+(o.bloom>1?40:0)},${Math.min(.6,.22*fl*(o.bloom||1))})`);gl.addColorStop(1,'rgba(255,40,30,0)');c.fillStyle=gl;c.fillRect(0,0,VWo,VHo);c.restore();
   letterbox(c,VWo,VHo);
+  const kk=s*zoom*(VWo/w);return{k:kk,map:(vx,vy)=>[VWo/2+(vx+(o.dx||0)-fx_)*kk,VHo/2+(vy+(o.dy||0)-fy)*kk]};
 }
 function makeCode(VWo,VHo){const cw=13,ch=19;const cols=Math.ceil(VWo/cw)+1,rows=Math.ceil(VHo/ch)+2;return{cw,ch,cols,rows,sp:Array.from({length:cols},()=>rnd(.015,.07)),g:Array.from({length:cols*rows},()=>Math.random()<.5?'0':'1')}}
 function drawCode(c,VWo,VHo,code,el,eggP){
@@ -1912,29 +1914,35 @@ async function runIntro(replay=false){
   await opScene(7000,(p,el)=>{drawCode(c,VWo,VHo,code,el,clamp((p-.25)/.6,0,1));if(Math.random()<.35)SFX.chatter();
     if(p<.06){c.fillStyle=`rgba(255,255,255,${.8-p/.06*.8})`;c.fillRect(0,0,VWo,VHo)}
     if(p>.8&&!said){said=true;caption('…알?',true)}});
-  // ④ it pushes through the glass
+  // ④ back in the room: the screen swells like a bubble and the egg pushes through the glass
   sub.classList.add('dim');Drone.swell(.13,2.8);
-  const oc=document.createElement('canvas');oc.width=VWo;oc.height=VHo;const ox=oc.getContext('2d');
-  const cx=VWo/2,cy=VHo*.46,cracks=[];for(let k=0;k<12;k++){let x=cx,y=cy,a=k/12*Math.PI*2+rnd(-.2,.2);const pts=[[x,y]];for(let i=0;i<7;i++){a+=rnd(-.45,.45);const L=rnd(20,60);x+=Math.cos(a)*L;y+=Math.sin(a)*L;pts.push([x,y])}cracks.push(pts)}
-  const shards=[];let shattered=false;const egg=SPR.egg;
-  await opScene(4000,(p,el)=>{
-    drawCode(ox,VWo,VHo,code,7000+el,1);warp(c,oc,VWo,VHo,cx,cy,REDUCE?0:ease.out(Math.min(1,p/.8))*.95);
-    c.save();c.globalCompositeOperation='lighter';
-    for(let k=0;k<9;k++){const a=k/9*Math.PI*2+el/2600,len=Math.max(VWo,VHo)*.75*ease.out(Math.min(1,p*1.3));c.strokeStyle=`rgba(255,${80+k*14},${140+k*9},${.16*Math.min(1,p*2)})`;c.lineWidth=14+k*5;c.beginPath();c.moveTo(cx,cy);c.quadraticCurveTo(cx+Math.cos(a+.7)*len*.45,cy+Math.sin(a+.7)*len*.45,cx+Math.cos(a)*len,cy+Math.sin(a)*len);c.stroke()}
-    c.restore();
-    const q=ease.inout(Math.min(1,p/.85)),sc=(VWo*.42+(VWo*1.05-VWo*.42)*q)/egg.w;
-    for(let t=3;t>=1;t--){c.globalAlpha=.16;drawAt(c,'egg',{x:cx,y:cy,sc:sc*(1-t*.06)});}c.globalAlpha=1;
-    c.shadowColor='#ff5a7a';c.shadowBlur=50;drawAt(c,'egg',{x:cx,y:cy+Math.sin(el/40)*q*3,sc});c.shadowBlur=0;
-    if(p>.45){const cp=clamp((p-.45)/.35,0,1);c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=2;c.shadowColor='#fff';c.shadowBlur=8;
-      for(const pts of cracks){const n=Math.max(1,Math.floor(cp*(pts.length-1)));c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<=n;i++)c.lineTo(pts[i][0],pts[i][1]);c.stroke()}c.shadowBlur=0;
-      if(!REDUCE&&Math.random()<.4){SFX.crack()}}
-    if(p>.8&&!shattered){shattered=true;SFX.glass();vib([60,40,220]);Drone.stop(.05);
-      for(let i=0;i<70;i++){const a=Math.random()*Math.PI*2,v=rnd(4,16);shards.push({x:cx+rnd(-60,60),y:cy+rnd(-80,80),vx:Math.cos(a)*v,vy:Math.sin(a)*v,s:rnd(6,22),r:Math.random()*6,vr:rnd(-.3,.3)})}}
-    if(shattered){const sp=clamp((p-.8)/.2,0,1);c.fillStyle=`rgba(0,0,0,${sp*.9})`;c.fillRect(0,0,VWo,VHo);
-      for(const s of shards){s.x+=s.vx;s.y+=s.vy;s.r+=s.vr;c.save();c.translate(s.x,s.y);c.rotate(s.r);c.fillStyle='rgba(255,220,230,.75)';c.beginPath();c.moveTo(0,-s.s/2);c.lineTo(s.s/2,s.s/2);c.lineTo(-s.s/3,s.s/3);c.fill();c.restore()}
-      if(sp<.4){c.fillStyle=`rgba(255,255,255,${.9-sp*2.2})`;c.fillRect(0,0,VWo,VHo)}}
+  const egg=SPR.egg,shards=[],rays=Array.from({length:10},(_,i)=>({a:i/10*Math.PI*2+rnd(-.2,.2),l:rnd(.6,1)}));let popped=false,lastCrack=0;
+  await opScene(4800,(p,el)=>{
+    const zoom=REDUCE?1.2:1+.9*(1-ease.out(Math.min(1,p/.3)));
+    const bul=clamp((p-.16)/.5,0,1),popT=clamp((p-.68)/.32,0,1),sh=!popped&&!REDUCE?bul*3:0;
+    const M=drawRoom(c,VWo,VHo,pal,el+30000,zoom,tod,{dx:rnd(-sh,sh),dy:rnd(-sh,sh),bloom:1+bul*2.5,mid:x=>{
+      if(popped||bul<=0)return;
+      const rx=76+bul*58,ry=70+bul*52;
+      const g=x.createRadialGradient(138,380,4,138,380,Math.max(rx,ry));g.addColorStop(0,'rgba(255,238,232,.95)');g.addColorStop(.4,'rgba(255,120,150,.9)');g.addColorStop(1,'rgba(200,30,60,0)');
+      x.fillStyle=g;x.beginPath();x.ellipse(138,380,rx,ry,0,0,Math.PI*2);x.fill();
+      x.strokeStyle=`rgba(255,170,190,${.55*bul})`;x.lineWidth=4;for(const q of rays){x.beginPath();x.moveTo(138+Math.cos(q.a)*rx*.8,380+Math.sin(q.a)*ry*.8);x.lineTo(138+Math.cos(q.a)*(rx+90*q.l*bul),380+Math.sin(q.a)*(ry+90*q.l*bul));x.stroke()}
+      const es=2.4+bul*3.3;x.globalAlpha=.3+bul*.55;paintSprite(x,'egg',138-egg.w*es/2,380-egg.h*es/2,es,{shadow:'#d8325a'});x.globalAlpha=1;
+      x.strokeStyle=`rgba(255,255,255,${.65*bul})`;x.lineWidth=3;x.beginPath();x.ellipse(138,380,rx*.86,ry*.86,0,Math.PI*1.08,Math.PI*1.45);x.stroke();x.beginPath();x.ellipse(138,380,rx*.7,ry*.7,0,Math.PI*1.14,Math.PI*1.3);x.stroke();
+    }});
+    if(bul>.3&&!popped&&el-lastCrack>rnd(140,420)){lastCrack=el;SFX.crack();vib(20)}
+    if(p>.68&&!popped){popped=true;SFX.glass();vib([60,40,220]);Drone.stop(.05);
+      const [sx,sy]=M.map(138,380);for(let i=0;i<64;i++){const a=Math.random()*Math.PI*2,v=rnd(3,13);shards.push({x:sx,y:sy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,s:Math.max(2,rnd(3,8)*M.k),c:pick(['#ffffff','#ffd0dc','#ff7a9a','#c8c8d8'])})}}
+    if(popped){
+      for(const s2 of shards){s2.x+=s2.vx;s2.y+=s2.vy;s2.vy+=.35;c.fillStyle=s2.c;c.fillRect(Math.round(s2.x),Math.round(s2.y),s2.s,s2.s)}
+      const [sx,sy]=M.map(138,380),tx=VWo/2,ty=VHo*.38,q=ease.out(popT);
+      const sc0=5.7*M.k,sc1=Math.floor(VWo*.42/egg.w),sc=sc0+(sc1-sc0)*q;
+      const ex=sx+(tx-sx)*q,ey=sy+(ty-sy)*q-Math.sin(q*Math.PI)*VHo*.07;
+      if(q<1)for(let t=3;t>=1;t--){c.globalAlpha=.18;drawAt(c,'egg',{x:sx+(ex-sx)*(1-t*.12),y:sy+(ey-sy)*(1-t*.12),sc:sc*(1-t*.06)})}
+      c.globalAlpha=1;c.shadowColor='#ff7a9a';c.shadowBlur=40;drawAt(c,'egg',{x:ex,y:ey,sc});c.shadowBlur=0;
+      if(popT<.35){c.fillStyle=`rgba(255,255,255,${.85*(1-popT/.35)})`;c.fillRect(0,0,VWo,VHo)}
+    }
   },{skip:false});
-  await sleep(500);
+  await sleep(150);
   // ⑤ the egg, here in this room
   const eggSc=Math.floor(VWo*.42/egg.w);let rcv=true;const motes=Array.from({length:30},()=>({x:Math.random()*VWo,y:Math.random()*VHo,v:rnd(.2,.7)}));
   const dimPal=Object.assign({},pal,{glow:'#2a0a12'});
