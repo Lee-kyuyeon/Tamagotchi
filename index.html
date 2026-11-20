@@ -43,7 +43,6 @@
 [hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overscroll-behavior:none}
-@media (display-mode: standalone){.app{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
 body{margin:0;background:var(--sky-0);color:var(--ink);font-family:var(--f-body);overflow:hidden;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -54,6 +53,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 
 .app{position:relative;z-index:1;height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding-block:10px 12px;gap:8px}
 .top{width:100%;display:flex;align-items:center;justify-content:space-between}
+/* home-screen app: the status bar sits on top of the page, so push the content below it */
+@media (display-mode: standalone){.app{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
+:root.standalone .app{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
 .brand{font-family:var(--f-pixel);letter-spacing:.22em;font-size:13px;color:var(--muted)}
 .brand b{color:var(--cyan);font-weight:400}
 .iconbtn{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
@@ -2139,6 +2141,7 @@ addEventListener('resize',sizeLcd);
 /* ================= home-screen app ================= */
 (function(){let framed=true;try{framed=window.self!==window.top}catch(e){}
   const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(standalone)document.documentElement.classList.add('standalone');
   if(!framed&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator)addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
   const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   if(!framed&&ios&&!standalone){const t=$('#installTip');if(t)t.hidden=false}
