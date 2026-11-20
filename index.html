@@ -215,6 +215,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 .device.assemble{animation:assemble 1.1s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes assemble{0%{opacity:0;transform:scale(.55) rotate(-8deg);filter:brightness(3) blur(4px)}60%{opacity:1;filter:brightness(1.5)}100%{opacity:1;transform:none;filter:none}}
 #ep .epsub{font-family:var(--f-pixel);font-size:13px;color:var(--muted);letter-spacing:.08em;animation:rise .5s .35s both}
+#saveConflict,#installGuide{width:min(400px,calc(100% - 32px));max-height:85dvh;overflow:auto;color:var(--ink);background:#10182a;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 16px 54px #0009}
+#saveConflict::backdrop,#installGuide::backdrop{background:#060919cc}
+#installGuide header{display:flex;align-items:center;gap:12px}
+#installGuide img{width:48px;height:48px;border-radius:11px}
+#installGuide h2{margin:0;font-size:20px;line-height:1.35}
+#installGuide ol{margin:16px 0;padding-left:24px;line-height:1.55}
+#installGuide li+li{margin-top:8px}
+#installGuide .note{margin:0 0 16px}
+#installContinue{width:100%}
 #rivalDialog{width:min(420px,calc(100% - 32px));max-height:80dvh;overflow:auto;color:#edf2ff;background:#171e33;border:1px solid #7181aa;border-radius:16px;padding:18px;box-shadow:0 16px 54px #0008}
 #rivalDialog::backdrop{background:#060919b8}
 #rivalDialog h2{font-size:18px;margin:0 0 12px}
@@ -320,6 +329,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 <canvas id="cut" hidden></canvas>
 <div class="ov" id="ep" hidden><div class="no" id="epNo">EPISODE 01</div><div class="line"></div><div class="title" id="epTitle"></div><div class="epsub" id="epSub"></div><div class="tap">화면을 누르면 계속</div></div>
 
+<dialog id="saveConflict" aria-labelledby="saveConflictTitle">
+  <h2 id="saveConflictTitle">다른 탭에서 저장이 바뀌었어</h2>
+  <p>다른 탭을 닫고 최신 저장을 불러와 줘.</p>
+  <button class="go-btn" id="reloadSave" type="button">최신 저장 불러오기</button>
+</dialog>
+<dialog id="installGuide" aria-labelledby="installTitle">
+  <header>
+    <img src="icons/apple-touch-icon.png" alt="" width="48" height="48">
+    <h2 id="installTitle">코드 링커를 홈 화면에 추가하기</h2>
+  </header>
+  <ol>
+    <li>사파리의 <b>공유</b> 버튼을 눌러.</li>
+    <li><b>홈 화면에 추가</b>를 골라. <b>웹 앱으로 열기</b>가 보이면 켜고 <b>추가</b>를 눌러.</li>
+    <li>홈 화면에서 <b>코드 링커</b> 아이콘을 열어 게임을 시작해.</li>
+  </ol>
+  <p class="note">홈 화면 앱의 진행은 사파리와 별도로 저장될 수 있어.</p>
+  <form method="dialog"><button class="go-btn" id="installContinue" type="submit">지금은 사파리에서 시작</button></form>
+</dialog>
+
 <div class="ov" id="intro" hidden>
   <canvas id="opcv"></canvas>
   <button class="iconbtn" id="opSkip" type="button" hidden>건너뛰기</button>
@@ -354,9 +382,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
       <div class="opt"><span>진화 시간</span><div class="seg" id="optTime"><button type="button" data-v="orig">오리지널</button><button type="button" data-v="fast">빠른 진행</button></div></div>
       <p class="note">오리지널: 꼬마기 10분 · 전사기 6시간 · 기사기 24시간 · 영웅기 36시간 · 전설기 48시간 (잠든 동안엔 멈춰). 빠른 진행: 한 번 앉은 자리에서 끝까지 볼 수 있는 속도.</p>
       <div class="opt"><span>시간 배속</span><div class="seg" id="optSpeed"><button type="button" data-v="1">x1</button><button type="button" data-v="10">x10</button><button type="button" data-v="60">x60</button></div></div>
-      <p class="note">시간 배속은 성장·배고픔 타이머를 빠르게 돌려. 진화를 빨리 보고 싶을 때 써 봐.</p>
+      <p class="note">시간 배속은 성장과 진화 시간을 빠르게 돌려. 먹이와 위생, 체력은 실제 시간을 따라가. 진화를 빨리 보고 싶을 때 써 봐.</p>
       <div><h4>링커 색</h4><div class="swatches" id="swatches2"></div></div>
-      <p class="note" id="installTip" hidden>📲 사파리 아래쪽 <b>공유</b> 버튼 → <b>홈 화면에 추가</b>를 누르면 주소창 없이 앱처럼 쓸 수 있어. (홈 화면 앱은 사파리와 저장 공간이 따로라서, 처음부터 시작돼.)</p>
+      <button class="iconbtn" id="installHelp" type="button" hidden>홈 화면에 추가하는 방법</button>
       <button class="iconbtn" id="replayBtn" type="button">오프닝 「그날 밤」 다시 보기</button>
       <button class="danger" id="resetBtn" type="button">처음부터 다시 시작</button>
     </div>
@@ -385,6 +413,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 
 <dialog id="rivalDialog" aria-labelledby="rivalTitle">
   <h2 id="rivalTitle">글리치 통신</h2>
+  <p id="rivalScore" class="note" hidden></p>
   <p id="rivalReply" aria-live="polite"></p>
   <form id="rivalForm">
     <label for="rivalInput">글리치에게 할 말</label>
@@ -411,8 +440,7 @@ function batchim(w){const c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)retur
 const J=(w,a,b)=>batchim(w)?a:b;
 const store={
   get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
-  del(k){try{localStorage.removeItem(k)}catch(e){}}
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 };
 const SAVE='codelinker.save.v1', SETK='codelinker.set.v1';
 let SET=Object.assign({sound:true,vib:true,speed:1,timeMode:'orig'},store.get(SETK)||{});
@@ -909,7 +937,35 @@ function migrate(s){const base=newState(s.tamer,s.color);const o=Object.assign(b
     o.raised=[...new Set([o.form,...o.album.map(entry=>entry.id)].filter(isCollectible))];
   }
   return o}
-function save(){if(!S)return;S.lastReal=Date.now();store.set(SAVE,S)}
+let savedSnapshot=null,saveConflict=false;
+function checkSaveSnapshot(){
+  if(saveConflict)return false;
+  if(localStorage.getItem(SAVE)===savedSnapshot)return true;
+  saveConflict=true;
+  $('#saveConflict').showModal();
+  return false;
+}
+function withSaveLock(write){
+  const commit=()=>{
+    try{if(checkSaveSnapshot())write()}catch(error){console.warn('Could not save CODE LINKER',error)}
+  };
+  if(navigator.locks) return navigator.locks.request(SAVE,commit).catch(error=>console.warn('Could not lock CODE LINKER save',error));
+  commit();
+}
+function save(){
+  if(!S||saveConflict)return;
+  S.lastReal=Date.now();
+  return withSaveLock(()=>{
+    const snapshot=JSON.stringify(S);
+    localStorage.setItem(SAVE,snapshot);
+    savedSnapshot=snapshot;
+  });
+}
+addEventListener('storage',event=>{
+  if(event.storageArea===localStorage&&(event.key===SAVE||event.key===null))checkSaveSnapshot();
+});
+$('#saveConflict').addEventListener('cancel',event=>event.preventDefault());
+$('#reloadSave').onclick=()=>location.reload();
 function addSeen(f){if(f&&!S.seen.includes(f))S.seen.push(f)}
 function bondAdd(n){S.bond=clamp(S.bond+n,0,100)}
 function isCollectible(id){const form=FORMS[id];return Boolean(form&&!form.enemy&&form.stage>0)}
@@ -1004,35 +1060,34 @@ function callReasons(){
 }
 function isNight(ts){const h=new Date(ts).getHours();return h>=0&&h<7}
 function addMistake(live){S.mistakes++;S.sm++;if(stageOf(S.form)<=2)S.mBaby++;bondAdd(-5);if(live){say('케어 미스… 링크가 약해졌다');SFX.no()}}
-function tick(ms,realNow,live){
+function tick(ms,realNow,live,mistakeLimit=Infinity){
   S.gt+=ms;if(S.gone)return;S.age+=ms;
-  const st=stageOf(S.form);
+  const st=stageOf(S.form),rms=live?ms/Math.max(1,SET.speed):ms;
   if(st===0){S.stAwake+=ms;return}
   const bed=st>=2&&isNight(realNow)&&realNow>S.wakeUntil,nap=realNow<S.napUntil,sleepNow=bed||nap;
   if(sleepNow!==S.sleeping){S.sleeping=sleepNow;if(live)say(sleepNow?(nap?'낮잠을 잔다… 쿨쿨':`${nm(S.form)}${J(nm(S.form),'이','가')} 졸려 한다… 불을 꺼 줘`):'좋은 아침!');if(!sleepNow)S.lightsOn=true}
-  if(S.sleeping){S.vitT+=ms;if(S.vitT>=R().sleepVit){S.vitT=0;if(st>=3)S.vit=Math.min(10,S.vit+1)}}
+  if(S.sleeping){S.vitT+=rms;if(S.vitT>=R().sleepVit){S.vitT=0;if(st>=3)S.vit=Math.min(10,S.vit+1)}}
   else{
     S.stAwake+=ms;
-    S.tH+=ms;if(S.tH>=HUNGER_MS){S.tH=0;if(S.hunger>0)S.hunger--}
-    S.tS+=ms;if(S.tS>=STR_MS){S.tS=0;if(S.strength>0)S.strength--}
-    S.tP+=ms;if(S.tP>=POOP_MS){S.tP=0;if(S.poop<4){S.poop++;if(live){SFX.poop();say('응가를 했다!')}}}
-    S.vitT+=ms;if(S.vitT>=R().vit){S.vitT=0;S.vit=Math.min(10,S.vit+1)}
+    S.tH+=rms;if(S.tH>=HUNGER_MS){S.tH=0;if(S.hunger>0)S.hunger--}
+    S.tS+=rms;if(S.tS>=STR_MS){S.tS=0;if(S.strength>0)S.strength--}
+    S.tP+=rms;if(S.tP>=POOP_MS){S.tP=0;if(S.poop<4){S.poop++;if(live){SFX.poop();say('응가를 했다!')}}}
+    S.vitT+=rms;if(S.vitT>=R().vit){S.vitT=0;S.vit=Math.min(10,S.vit+1)}
   }
-  if(S.poop>=4&&!S.injury){S.tSick+=ms;if(S.tSick>=SICK_MS){S.injury=1;S.tSick=0;if(live){say('지저분해서 다쳐 버렸다!');SFX.call()}}}else if(S.poop<4)S.tSick=0;
-  const rms=live?ms/Math.max(1,SET.speed):ms; // the speed-up setting only hurries growth, never neglect
+  if(S.poop>=4&&!S.injury){S.tSick+=rms;if(S.tSick>=SICK_MS){S.injury=1;S.tSick=0;if(live){say('지저분해서 다쳐 버렸다!');SFX.call()}}}else if(S.poop<4)S.tSick=0;
   if(S.injury){S.injT+=rms;if(S.injT>=R().inj){S.injT=0;S.lostPending=true;if(live&&mode.name==='main'&&!busy()){S.lostPending=false;partnerLost()}return}}else S.injT=0;
   const rs=callReasons();
   if(rs.length){
     if(!S.callSince){S.callSince=1;S.callT=0;if(live){SFX.call();vib([60,60,60]);say('!! '+rs[0])}}
-    else{S.callT=(S.callT||0)+rms;if(S.callT>CALL_MS){addMistake(live);S.callT=0}}
+    else{S.callT=(S.callT||0)+rms;if(S.callT>CALL_MS){if(S.mistakes<mistakeLimit)addMistake(live);S.callT=0}}
   }else{S.callSince=0;S.callT=0}
 }
 function catchUp(){
   if(!S)return 0;
   const el=clamp(Date.now()-S.lastReal,0,12*3600e3);if(el<3000)return el;
-  const b={m:S.mistakes,sm:S.sm,mb:S.mBaby},step=10e3;let t=S.lastReal;
-  for(let left=el;left>0;left-=step){const ms=Math.min(step,left);t+=ms;tick(ms,t,false);if(S.lostPending)break}
-  S.mistakes=Math.min(S.mistakes,b.m+2);S.sm=Math.min(S.sm,b.sm+2);S.mBaby=Math.min(S.mBaby,b.mb+2);S.lastReal=Date.now();
+  const mistakeLimit=S.mistakes+2,step=10e3;let t=S.lastReal;
+  for(let left=el;left>0;left-=step){const ms=Math.min(step,left);t+=ms;tick(ms,t,false,mistakeLimit);if(S.lostPending)break}
+  S.lastReal=Date.now();
   return el;
 }
 /* the chart: which form comes next, given how this partner was raised */
@@ -1101,7 +1156,7 @@ function setMode(name,data={}){
   if(name==='main')glow(false);
   paintRivalButton();
 }
-function busy(){return paused||cineBusy>0||rivalDialog.open}
+function busy(){return saveConflict||paused||cineBusy>0||rivalDialog.open}
 function curForm(){return (mode.name==='battle'&&mode.B)?mode.B.cur:(S&&!S.gone?S.form:'egg')}
 function refuse(m){setMode('refuse');say(m);SFX.no()}
 
@@ -1322,19 +1377,31 @@ function doResonance(B){
 function endBattle(res){
   const B=mode.B;$('#linkbar').hidden=true;$('#motionBtn').hidden=true;glow(false);$('#lamp').classList.remove('on');$('#lamp2').classList.remove('on');
   setColor(false);S.encAt=Date.now()+rnd(180e3,360e3);
-  if(res!==null)S.sb++;
-  if(res==='win'){if(B.type==='tag'){S.tagWins++;S.tw++;S.tagWith[B.mate]=(S.tagWith[B.mate]||0)+1}else{S.wins++;S.pw++}S.sw++;if(!B.rival)S.ladder++;bondAdd(3);
+  if(res!==null&&!B.rival)S.sb++;
+  if(res==='win'){
+    if(!B.rival){
+      if(B.type==='tag'){S.tagWins++;S.tw++;S.tagWith[B.mate]=(S.tagWith[B.mate]||0)+1}else{S.wins++;S.pw++}
+      S.sw++;S.ladder++;
+    }
+    bondAdd(3);
     S.weight=Math.max(FORMS[S.form].wt,S.weight-2);if(Math.random()<.5)S.hunger=Math.max(0,S.hunger-1)}
-  else if(res==='lose'){if(B.type==='tag')S.tl++;else{S.losses++;S.pl++}bondAdd(1);if(Math.random()<.35){S.injury=Math.max(S.injury,1);say('패배하면서 다쳐 버렸다…')}}
+  else if(res==='lose'){if(!B.rival){if(B.type==='tag')S.tl++;else{S.losses++;S.pl++}}bondAdd(1);if(Math.random()<.35){S.injury=Math.max(S.injury,1);say('패배하면서 다쳐 버렸다…')}}
   if(B.rival&&res)recordRivalResult(B,res);
   checkUnlocks();save();
   const after=()=>{
     const eps=[];const tot=S.wins+S.tagWins;
-    if(res==='win'&&tot===1)eps.push('첫 승리, 우리는 파트너');
-    else if(res==='win'&&tot%10===0)eps.push(`${tot}번째 승리의 노래`);
-    if(res==='lose'&&S.losses+S.tl===1)eps.push('패배의 밤, 다시 일어서는 법');
+    if(!B.rival&&res==='win'&&tot===1)eps.push('첫 승리, 우리는 파트너');
+    else if(!B.rival&&res==='win'&&tot%10===0)eps.push(`${tot}번째 승리의 노래`);
+    if(!B.rival&&res==='lose'&&S.losses+S.tl===1)eps.push('패배의 밤, 다시 일어서는 법');
     if(eps.length)cine(async()=>{for(const e of eps)await showEpisode(e)});
-    if(res==='win'){speak(pick(['이겼다! 봤지, {T}?','우리 둘이면 무적이야!','후우… {T}가 있어서 이길 수 있었어.']));setMode('bcont',{opt:0,type:B.type,mate:B.mate});say('A: 계속 / 처음부터 · B: 결정 · C: 끝',0)}
+    if(res==='win'){
+      speak(pick(['이겼다! 봤지, {T}?','우리 둘이면 무적이야!','후우… {T}가 있어서 이길 수 있었어.']));
+      if(B.rival){
+        setMode('main');say('글리치의 전투 기록을 열어 봐.');
+      }else{
+        setMode('bcont',{opt:0,type:B.type,mate:B.mate});say('A: 계속 / 처음부터 · B: 결정 · C: 끝',0);
+      }
+    }
     else{if(res==='lose')speak('미안, {T}… 다음엔 꼭 이길게.');setMode('main')}
   };
   if(B.resonated&&B.team[0]!==B.base){setMode('revert',{from:B.team[0],to:B.base,next:after});say(`${nm(B.base)}${J(nm(B.base),'으로','로')} 돌아왔다`)}
@@ -1697,8 +1764,8 @@ function paintCard(){
 let last=performance.now(),acc=0,saveT=0,cardT=0;
 function frameLoop(now){
   const dt=Math.min(100,now-last);last=now;
-  if(S&&!paused){
-    acc+=dt*SET.speed;while(acc>=1000){acc-=1000;tick(1000,Date.now(),true)}
+  if(S&&!paused&&!saveConflict){
+    acc+=dt;while(acc>=1000){acc-=1000;tick(1000*SET.speed,Date.now(),true)}
     update(dt);
     saveT+=dt;if(saveT>5000){saveT=0;save()}
   }
@@ -2191,7 +2258,7 @@ $('#sheetClose').onclick=()=>{$('#sheet').hidden=true};
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab)});
 let resetArm=0;
-$('#resetBtn').onclick=()=>{const b=$('#resetBtn');if(Date.now()-resetArm<4000){store.del(SAVE);location.reload();return}resetArm=Date.now();b.textContent='정말 지울까? 한 번 더 누르면 처음부터';setTimeout(()=>b.textContent='처음부터 다시 시작',4000)};
+$('#resetBtn').onclick=()=>{const b=$('#resetBtn');if(Date.now()-resetArm<4000){withSaveLock(()=>{localStorage.removeItem(SAVE);saveConflict=true;location.reload()});return}resetArm=Date.now();b.textContent='정말 지울까? 한 번 더 누르면 처음부터';setTimeout(()=>b.textContent='처음부터 다시 시작',4000)};
 
 /* ================= Glitch rival transmission ================= */
 const rivalDialog = $('#rivalDialog');
@@ -2237,6 +2304,9 @@ function paintRivalDialog() {
   $('#rivalReply').textContent = pre
     ? exchange?.reply || (exchange ? '글리치가 신호를 받았다.' : record ? '또 네 신호네. 이번엔 무슨 일이야?' : '이 신호를 잡았어? 네 파트너와 한 번 겨뤄 보고 싶어.')
     : record.line;
+  const score=S.rival?.score;
+  $('#rivalScore').hidden=!score;
+  if(score)$('#rivalScore').textContent=`라이벌 전적 · ${score.win}승 ${score.lose}패 ${score.draw}무`;
   $('#rivalForm').hidden = !pre;
   $('#rivalFight').hidden = !pre;
   $('#rivalSetup').hidden = !pre || rivalModelState === 'ready' || Boolean(rivalJob);
@@ -2325,6 +2395,8 @@ $('#rivalFight').onclick = () => {
 
 function recordRivalResult(battle, result) {
   const journal = S.rival ??= {};
+  const score=journal.score??={win:0,lose:0,draw:0};
+  score[result]++;
   const facts = {
     파트너: nm(battle.base),
     플레이어결과: {win: '승리', lose: '패배', draw: '무승부'}[result],
@@ -2359,7 +2431,7 @@ function recordRivalResult(battle, result) {
 ['A','B','C'].forEach(k=>{const b=$('#b'+k);b.addEventListener('pointerdown',e=>{e.preventDefault();held[k]=true;press(k)});
   ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{held[k]=false}));b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();press(k)}})});
 addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||!$('#sheet').hidden||$('#rivalDialog').open)return;
+  if(saveConflict||e.target.tagName==='INPUT'||!$('#sheet').hidden||$('#rivalDialog').open||$('#installGuide').open)return;
   const k=e.key.toLowerCase();
   const key=['z','a','1'].includes(k)?'A':['x','s','2','enter',' '].includes(k)?'B':['c','d','3','escape','backspace'].includes(k)?'C':null;
   if(!key)return;if(key==='B')e.preventDefault();if(e.repeat)return;held[key]=true;press(key);
@@ -2388,21 +2460,44 @@ addEventListener('pagehide',save);
 addEventListener('resize',sizeLcd);
 
 /* ================= home-screen app ================= */
-(function(){let framed=true;try{framed=window.self!==window.top}catch(e){}
-  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if(!framed&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator)addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
-  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  if(!framed&&ios&&!standalone){const t=$('#installTip');if(t)t.hidden=false}
-})();
+const INSTALL_GUIDE_KEY='codelinker.install-guide.v1';
+const installGuide=$('#installGuide');
+let installStartsGame=false;
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isSafari=/Version\//.test(navigator.userAgent)&&/Safari\//.test(navigator.userAgent);
+const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const canShowInstallGuide=window.self===window.top&&location.protocol==='https:'&&isIOS&&isSafari&&!isStandalone;
+
+function openInstallGuide(firstRun){
+  installStartsGame=firstRun;
+  $('#installContinue').textContent=firstRun?'지금은 사파리에서 시작':'닫기';
+  installGuide.showModal();
+}
+installGuide.addEventListener('close',()=>{
+  if(!installStartsGame)return;
+  installStartsGame=false;
+  store.set(INSTALL_GUIDE_KEY,true);
+  runIntro();
+});
+const installHelp=$('#installHelp');
+installHelp.hidden=!canShowInstallGuide;
+installHelp.onclick=()=>openInstallGuide(false);
+
+if(window.self===window.top&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator){
+  addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+}
 /* ================= boot ================= */
 function boot(){
   sizeLcd();
-  const saved=store.get(SAVE);
+  let saved;
+  try{savedSnapshot=localStorage.getItem(SAVE);saved=JSON.parse(savedSnapshot)}catch{}
   if(saved&&saved.v===1){
     S=migrate(saved);applyShell(S.color);paintRivalButton();
     const el=catchUp();if(!S.gone)P.x=Math.round((W-SPR[S.form].w)/2);
     say(idleMsg());
     setTimeout(()=>speak(el>120e3?`{T}! 돌아왔구나. ${Math.round(el/60000)}분 동안 기다렸어!`:'어서 와, {T}! 오늘도 같이 있자.'),500);
+  }else if(canShowInstallGuide&&!store.get(INSTALL_GUIDE_KEY)){
+    openInstallGuide(true);
   }else{
     runIntro();
   }
