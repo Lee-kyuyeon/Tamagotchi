@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"><!--WRAP-->
 <meta name="theme-color" content="#070b1f"><!--WRAP-->
 <meta name="apple-mobile-web-app-capable" content="yes"><!--WRAP-->
+<meta name="mobile-web-app-capable" content="yes"><!--WRAP-->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><!--WRAP-->
+<meta name="apple-mobile-web-app-title" content="코드 링커"><!--WRAP-->
+<link rel="manifest" href="manifest.webmanifest"><!--WRAP-->
+<link rel="icon" type="image/png" href="icons/icon-192.png"><!--WRAP-->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><!--WRAP-->
 <title>코드 링커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +42,8 @@
 
 [hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
+html,body{height:100%;overscroll-behavior:none}
+@media (display-mode: standalone){.app{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
 body{margin:0;background:var(--sky-0);color:var(--ink);font-family:var(--f-body);overflow:hidden;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -340,6 +347,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
       <div class="opt"><span>시간 배속</span><div class="seg" id="optSpeed"><button type="button" data-v="1">x1</button><button type="button" data-v="10">x10</button><button type="button" data-v="60">x60</button></div></div>
       <p class="note">시간 배속은 성장·배고픔 타이머를 빠르게 돌려. 진화를 빨리 보고 싶을 때 써 봐.</p>
       <div><h4>링커 색</h4><div class="swatches" id="swatches2"></div></div>
+      <p class="note" id="installTip" hidden>📲 사파리 아래쪽 <b>공유</b> 버튼 → <b>홈 화면에 추가</b>를 누르면 주소창 없이 앱처럼 쓸 수 있어. (홈 화면 앱은 사파리와 저장 공간이 따로라서, 처음부터 시작돼.)</p>
       <button class="iconbtn" id="replayBtn" type="button">오프닝 「그날 밤」 다시 보기</button>
       <button class="danger" id="resetBtn" type="button">처음부터 다시 시작</button>
     </div>
@@ -2051,6 +2059,13 @@ document.addEventListener('visibilitychange',()=>{
 addEventListener('pagehide',save);
 addEventListener('resize',sizeLcd);
 
+/* ================= home-screen app ================= */
+(function(){let framed=true;try{framed=window.self!==window.top}catch(e){}
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(!framed&&(location.protocol==='https:'||location.hostname==='localhost')&&'serviceWorker' in navigator)addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(!framed&&ios&&!standalone){const t=$('#installTip');if(t)t.hidden=false}
+})();
 /* ================= boot ================= */
 function boot(){
   sizeLcd();
